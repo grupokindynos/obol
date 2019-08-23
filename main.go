@@ -27,7 +27,3 @@ func GetApp() *gin.Engine {
 	api.ApplyRoutes(App)
 	return App
 }
-
-
-
-

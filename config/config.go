@@ -12,6 +12,8 @@ var (
 	ErrorUnableToParseStringToFloat = errors.New("unable to convert string to float")
 	ErrorCoinNotAvailable           = errors.New("coin not available")
 	ErrorNoServiceForCoin           = errors.New("unable to load exchange for this coin")
+	ErrorNoC2CWithBTC           	= errors.New("coin to coin function doesn't work using BTC")
+	ErrorNoC2CWithSameCoin          = errors.New("cannot use the same coin on both parameters")
 	HttpClient                      = &http.Client{
 		Timeout: time.Second * 10,
 	}

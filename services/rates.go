@@ -200,6 +200,8 @@ func loadFiatRates() {
 	}
 }
 
+
+
 func InitRateService() *RateSevice {
 	loadFiatRates()
 	rs := &RateSevice{

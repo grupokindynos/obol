@@ -1,0 +1,64 @@
+package exchanges
+
+type StexRate struct {
+	Success bool `json:"success"`
+	Data    struct {
+		ID               int    `json:"id"`
+		AmountMultiplier int    `json:"amount_multiplier"`
+		CurrencyCode     string `json:"currency_code"`
+		MarketCode       string `json:"market_code"`
+		CurrencyName     string `json:"currency_name"`
+		MarketName       string `json:"market_name"`
+		Symbol           string `json:"symbol"`
+		GroupName        string `json:"group_name"`
+		GroupID          int    `json:"group_id"`
+		Ask              string `json:"ask"`
+		Bid              string `json:"bid"`
+		Last             string `json:"last"`
+		Open             string `json:"open"`
+		Low              string `json:"low"`
+		High             string `json:"high"`
+		Volume           string `json:"volume"`
+		VolumeQuote      string `json:"volumeQuote"`
+		Count            string `json:"count"`
+		FiatsRate        struct {
+			USD int `json:"USD"`
+			EUR int `json:"EUR"`
+			UAH int `json:"UAH"`
+			AUD int `json:"AUD"`
+			IDR int `json:"IDR"`
+			CNY int `json:"CNY"`
+			KRW int `json:"KRW"`
+			JPY int `json:"JPY"`
+			VND int `json:"VND"`
+			INR int `json:"INR"`
+			GBP int `json:"GBP"`
+			CAD int `json:"CAD"`
+			BRL int `json:"BRL"`
+			RUB int `json:"RUB"`
+		} `json:"fiatsRate"`
+		Timestamp int64 `json:"timestamp"`
+	} `json:"data"`
+}
+
+type StexMarkets struct {
+	Success bool `json:"success"`
+	Data    struct {
+		Ask []struct {
+			CurrencyPairID   int     `json:"currency_pair_id"`
+			Amount           string  `json:"amount"`
+			Price            string  `json:"price"`
+			Amount2          string  `json:"amount2"`
+			Count            int     `json:"count"`
+			CumulativeAmount float64 `json:"cumulative_amount"`
+		} `json:"ask"`
+		Bid []struct {
+			CurrencyPairID   int     `json:"currency_pair_id"`
+			Amount           string  `json:"amount"`
+			Price            string  `json:"price"`
+			Amount2          string  `json:"amount2"`
+			Count            int     `json:"count"`
+			CumulativeAmount float64 `json:"cumulative_amount"`
+		} `json:"bid"`
+	} `json:"data"`
+}

@@ -22,20 +22,20 @@ type StexRate struct {
 		VolumeQuote      string `json:"volumeQuote"`
 		Count            string `json:"count"`
 		FiatsRate        struct {
-			USD int `json:"USD"`
-			EUR int `json:"EUR"`
-			UAH int `json:"UAH"`
-			AUD int `json:"AUD"`
-			IDR int `json:"IDR"`
-			CNY int `json:"CNY"`
-			KRW int `json:"KRW"`
-			JPY int `json:"JPY"`
-			VND int `json:"VND"`
-			INR int `json:"INR"`
-			GBP int `json:"GBP"`
-			CAD int `json:"CAD"`
-			BRL int `json:"BRL"`
-			RUB int `json:"RUB"`
+			USD float64 `json:"USD"`
+			EUR float64 `json:"EUR"`
+			UAH int     `json:"UAH"`
+			AUD float64 `json:"AUD"`
+			IDR int     `json:"IDR"`
+			CNY int     `json:"CNY"`
+			KRW int     `json:"KRW"`
+			JPY int     `json:"JPY"`
+			VND int     `json:"VND"`
+			INR int     `json:"INR"`
+			GBP float64 `json:"GBP"`
+			CAD float64 `json:"CAD"`
+			BRL int     `json:"BRL"`
+			RUB int     `json:"RUB"`
 		} `json:"fiatsRate"`
 		Timestamp int64 `json:"timestamp"`
 	} `json:"data"`
@@ -60,5 +60,7 @@ type StexMarkets struct {
 			Count            int     `json:"count"`
 			CumulativeAmount float64 `json:"cumulative_amount"`
 		} `json:"bid"`
+		AskTotalAmount float64 `json:"ask_total_amount"`
+		BidTotalAmount float64 `json:"bid_total_amount"`
 	} `json:"data"`
 }

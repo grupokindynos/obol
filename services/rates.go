@@ -8,6 +8,7 @@ import (
 	coinfactory "github.com/grupokindynos/obol/models/coin-factory"
 	"github.com/grupokindynos/obol/models/exchanges"
 	"github.com/grupokindynos/obol/services/exchanges/binance"
+	"github.com/grupokindynos/obol/services/exchanges/bittrex"
 	"github.com/grupokindynos/obol/services/exchanges/crex24"
 	"github.com/grupokindynos/obol/services/exchanges/cryptobridge"
 	"github.com/grupokindynos/obol/services/exchanges/stex"
@@ -28,38 +29,35 @@ var FiatRates *models.FiatRates
 
 type RateSevice struct {
 	FiatRates           *models.FiatRates
+	BittrexService 		*bittrex.Service
 	BinanceService      *binance.Service
 	CryptoBridgeService *cryptobridge.Service
 	Crex24Service       *crex24.Service
 	StexService         *stex.Service
 }
 
-func (rs *RateSevice) GetCoinRates(coin *coinfactory.Coin) (rates map[string]models.Rate, err error) {
+func (rs *RateSevice) GetCoinRates(coin *coinfactory.Coin) (rates map[string]float64, err error) {
 	btcRates, err := rs.GetBtcRates()
 	if err != nil {
 		return rates, err
 	}
 	if coin.Tag == "BTC" {
-		btcRatesMap := make(map[string]models.Rate)
-		for _, rate := range btcRates {
-			btcRatesMap[rate.Code] = rate
+		btcRatesMap := make(map[string]float64)
+		for code, rate := range btcRates {
+			btcRatesMap[code] = rate
 		}
 		return btcRatesMap, nil
 	} else {
-		rate := rs.GetCoinExchangeRate(coin)
-		newRates := make(map[string]models.Rate)
-		for _, singleRate := range btcRates {
-			newRate := models.Rate{
-				Code: singleRate.Code,
-			}
-			if singleRate.Code == "BTC" || singleRate.Code == "BCH" || singleRate.Code == "ETH" {
-				newRate.Rate = math.Floor((rate*singleRate.Rate)*1e8) / 1e8
+		rate, err := rs.GetCoinExchangeRate(coin)
+		newRates := make(map[string]float64)
+		for code, singleRate := range btcRates {
+			if code == "BTC" {
+				newRates[code] = math.Floor((rate*singleRate)*1e8) / 1e8
 			} else {
-				newRate.Rate = math.Floor((rate*singleRate.Rate)*10000) / 10000
+				newRates[code] = math.Floor((rate*singleRate)*10000) / 10000
 			}
-			newRates[singleRate.Code] = newRate
 		}
-		return newRates, nil
+		return newRates, err
 	}
 }
 
@@ -72,14 +70,14 @@ func (rs *RateSevice) GetCoinToCoinRates(coinFrom *coinfactory.Coin, coinTo *coi
 	if err != nil {
 		return rate, err
 	}
-	coinFromCommonRate := coinFromRates["BTC"].Rate
-	coinToCommonRate := coinToRates["BTC"].Rate
+	coinFromCommonRate := coinFromRates["BTC"]
+	coinToCommonRate := coinToRates["BTC"]
 	rate = math.Floor(coinToCommonRate/coinFromCommonRate*1e8) / 1e8
 	return rate, nil
 }
 
 func (rs *RateSevice) GetCoinToCoinRatesWithAmount(coinFrom *coinfactory.Coin, coinTo *coinfactory.Coin, amount float64) (rate float64, err error) {
-	coinFromMarkets, err := rs.GetCoinOrdersWallet(coinFrom)
+	coinFromMarkets, err := rs.GetCoinOrdersWall(coinFrom)
 	if err != nil {
 		return rate, err
 	}
@@ -87,7 +85,7 @@ func (rs *RateSevice) GetCoinToCoinRatesWithAmount(coinFrom *coinfactory.Coin, c
 	if err != nil {
 		return rate, err
 	}
-	coinToBTCRate := coinToRates["BTC"].Rate
+	coinToBTCRate := coinToRates["BTC"]
 	var countedAmount float64
 	var pricesSum float64
 	for _, order := range coinFromMarkets {
@@ -110,11 +108,13 @@ func (rs *RateSevice) GetCoinToCoinRatesWithAmount(coinFrom *coinfactory.Coin, c
 	return finaleRate, nil
 }
 
-func (rs *RateSevice) GetCoinExchangeRate(coin *coinfactory.Coin) float64 {
+func (rs *RateSevice) GetCoinExchangeRate(coin *coinfactory.Coin) (float64, error) {
 	var service Exchange
 	switch coin.Exchange {
 	case "binance":
 		service = rs.BinanceService
+	case "bittrex":
+		service = rs.BittrexService
 	case "cryptobridge":
 		service = rs.CryptoBridgeService
 	case "crex24":
@@ -124,20 +124,18 @@ func (rs *RateSevice) GetCoinExchangeRate(coin *coinfactory.Coin) float64 {
 	}
 	if service != nil {
 		rate, err := service.CoinRate(coin.Tag)
-		if err != nil {
-			return 0
-		}
-		return rate
+		return rate, err
 	}
-
-	return 0
+	return 0, config.ErrorNoServiceForCoin
 }
 
-func (rs *RateSevice) GetCoinOrdersWallet(coin *coinfactory.Coin) ([]models.MarketOrder, error) {
+func (rs *RateSevice) GetCoinOrdersWall(coin *coinfactory.Coin) (orders []models.MarketOrder, err error) {
 	var service Exchange
 	switch coin.Exchange {
 	case "binance":
 		service = rs.BinanceService
+	case "bittrex":
+		service = rs.BittrexService
 	case "cryptobridge":
 		service = rs.CryptoBridgeService
 	case "crex24":
@@ -146,13 +144,10 @@ func (rs *RateSevice) GetCoinOrdersWallet(coin *coinfactory.Coin) ([]models.Mark
 		service = rs.StexService
 	}
 	if service != nil {
-		orders, err := service.CoinMarketOrders(coin.Tag)
-		if err != nil {
-			return []models.MarketOrder{}, err
-		}
-		return orders, nil
+		orders, err = service.CoinMarketOrders(coin.Tag)
+		return orders, err
 	}
-	return []models.MarketOrder{}, nil
+	return orders, config.ErrorNoServiceForCoin
 }
 
 func (rs *RateSevice) GetBtcMxnRate() (float64, error) {
@@ -166,30 +161,22 @@ func (rs *RateSevice) GetBtcMxnRate() (float64, error) {
 		contents, _ := ioutil.ReadAll(res.Body)
 		var bitsoRates exchanges.BitsoRates
 		err = json.Unmarshal(contents, &bitsoRates)
-		if err != nil {
-			return 0, err
-		}
-		rate , err := strconv.ParseFloat(bitsoRates.Payload.Last, 64)
-		if err != nil {
-			return 0, err
-		}
-		return rate, nil
+		rate, err := strconv.ParseFloat(bitsoRates.Payload.Last, 64)
+		return rate, err
 	}
 }
 
-func (rs *RateSevice) GetBtcRates() (rates map[string]models.Rate, err error) {
+func (rs *RateSevice) GetBtcRates() (rates map[string]float64, err error) {
 	if rs.FiatRates.LastUpdated.Unix()+UpdateFiatRatesTimeFrame > time.Now().Unix() {
 		loadFiatRates()
 	}
 	mxnRate, err := rs.GetBtcMxnRate()
-	if err != nil {
-		return rates, err
-	}
-	rates = make(map[string]models.Rate)
+	rates = make(map[string]float64)
 	for key, rate := range FiatRates.Rates {
-		rates[key] = models.Rate{Code: key,Rate: rate * mxnRate}
+		rates[key] = rate * mxnRate
 	}
-	return rates, nil
+	rates["BTC"] = 1
+	return rates, err
 }
 
 func loadFiatRates() {
@@ -213,10 +200,13 @@ func loadFiatRates() {
 	}
 }
 
+
+
 func InitRateService() *RateSevice {
 	loadFiatRates()
 	rs := &RateSevice{
 		FiatRates:           FiatRates,
+		BittrexService: bittrex.InitService(),
 		BinanceService:      binance.InitService(),
 		CryptoBridgeService: cryptobridge.InitService(),
 		Crex24Service:       crex24.InitService(),

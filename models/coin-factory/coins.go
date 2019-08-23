@@ -30,7 +30,7 @@ var (
 	DigiByte = Coin{
 		Tag:      "DGB",
 		Name:     "digibyte",
-		Exchange: "binance",
+		Exchange: "bittrex",
 	}
 	GroestlCoin = Coin{
 		Tag:      "GRS",

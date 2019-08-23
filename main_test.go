@@ -20,7 +20,7 @@ func TestSimpleRates(t *testing.T) {
 	Coins := coin_factory.CoinFactory
 	App := GetApp()
 	for _, coin := range Coins {
-		w := performRequest(App, "GET", "/simple/" + coin.Tag)
+		w := performRequest(App, "GET", "/simple/"+coin.Tag)
 		assert.Equal(t, http.StatusOK, w.Code)
 		var response map[string]interface{}
 		err := json.Unmarshal(w.Body.Bytes(), &response)
@@ -29,4 +29,10 @@ func TestSimpleRates(t *testing.T) {
 		assert.True(t, exists)
 		assert.Equal(t, float64(1), value)
 	}
+}
+
+func TestNonExistingRoute(t *testing.T) {
+	App := GetApp()
+	w := performRequest(App, "GET", "/none")
+	assert.Equal(t, http.StatusNotFound, w.Code)
 }

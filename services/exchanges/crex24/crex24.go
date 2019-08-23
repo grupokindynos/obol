@@ -23,14 +23,8 @@ func (s Service) CoinRate(coin string) (rate float64, err error) {
 			_ = res.Body.Close()
 		}()
 		contents, err := ioutil.ReadAll(res.Body)
-		if err != nil {
-			return rate, err
-		}
 		var Response exchanges.Crex24Rates
 		err = json.Unmarshal(contents, &Response)
-		if err != nil {
-			return rate, err
-		}
 		return Response.Tickers[0].Last, err
 	}
 }
@@ -44,14 +38,8 @@ func (s *Service) CoinMarketOrders(coin string) (orders []models.MarketOrder, er
 			_ = res.Body.Close()
 		}()
 		contents, err := ioutil.ReadAll(res.Body)
-		if err != nil {
-			return orders, err
-		}
 		var Response exchanges.Crex24Markets
 		err = json.Unmarshal(contents, &Response)
-		if err != nil {
-			return orders, err
-		}
 		for _, ask := range Response.BuyLevels {
 			newOrder := models.MarketOrder{
 				Price:  ask.Price,

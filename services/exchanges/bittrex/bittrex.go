@@ -1,4 +1,4 @@
-package cryptobridge
+package bittrex
 
 import (
 	"encoding/json"
@@ -6,7 +6,6 @@ import (
 	"github.com/grupokindynos/obol/models/exchanges"
 	"io/ioutil"
 	"net/http"
-	"strconv"
 	"strings"
 )
 
@@ -15,8 +14,8 @@ type Service struct {
 	MarketRateURL string
 }
 
-func (s Service) CoinRate(coin string) (rate float64, err error) {
-	res, err := http.Get(s.BaseRateURL + strings.ToUpper(coin) + "_BTC")
+func (s *Service) CoinRate(coin string) (rate float64, err error) {
+	res, err := http.Get(s.BaseRateURL + strings.ToUpper(coin))
 	if err != nil {
 		return rate, err
 	} else {
@@ -24,15 +23,14 @@ func (s Service) CoinRate(coin string) (rate float64, err error) {
 			_ = res.Body.Close()
 		}()
 		contents, err := ioutil.ReadAll(res.Body)
-		var Response exchanges.CryptoBridgeRate
+		var Response exchanges.BittrexRate
 		err = json.Unmarshal(contents, &Response)
-		rate, err := strconv.ParseFloat(Response.Last, 64)
-		return rate, err
+		return Response.Result.Last, err
 	}
 }
 
 func (s *Service) CoinMarketOrders(coin string) (orders []models.MarketOrder, err error) {
-	res, err := http.Get(s.MarketRateURL + strings.ToUpper(coin) + "_BTC")
+	res, err := http.Get(s.MarketRateURL + strings.ToUpper(coin) + "&type=both")
 	if err != nil {
 		return orders, err
 	} else {
@@ -40,11 +38,11 @@ func (s *Service) CoinMarketOrders(coin string) (orders []models.MarketOrder, er
 			_ = res.Body.Close()
 		}()
 		contents, err := ioutil.ReadAll(res.Body)
-		var Response exchanges.CryptoBridgeMarkets
+		var Response exchanges.BittrexMarkets
 		err = json.Unmarshal(contents, &Response)
-		for _, ask := range Response.Bids {
-			price, _ := strconv.ParseFloat(ask.Price, 64)
-			amount, _ := strconv.ParseFloat(ask.Amount, 64)
+		for _, ask := range Response.Result.Buy {
+			price := ask.Rate
+			amount := ask.Quantity
 			newOrder := models.MarketOrder{
 				Price:  price,
 				Amount: amount,
@@ -57,8 +55,8 @@ func (s *Service) CoinMarketOrders(coin string) (orders []models.MarketOrder, er
 
 func InitService() *Service {
 	s := &Service{
-		BaseRateURL:   "https://api.crypto-bridge.org/v1/ticker/",
-		MarketRateURL: "https://api.crypto-bridge.org/v2/market/book/",
+		BaseRateURL:   "https://api.bittrex.com/api/v1.1/public/getticker?market=BTC-",
+		MarketRateURL: "https://api.bittrex.com/api/v1.1/public/getorderbook?market=BTC-",
 	}
 	return s
 }

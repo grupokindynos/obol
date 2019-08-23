@@ -2,7 +2,7 @@ package main
 
 import (
 	"encoding/json"
-	coin_factory "github.com/grupokindynos/obol/models/coin-factory"
+	"github.com/grupokindynos/obol/models/coin-factory"
 	"github.com/stretchr/testify/assert"
 	"net/http"
 	"net/http/httptest"
@@ -17,7 +17,7 @@ func performRequest(r http.Handler, method, path string) *httptest.ResponseRecor
 }
 
 func TestSimpleRates(t *testing.T) {
-	Coins := coin_factory.CoinFactory
+	Coins := coinfactory.CoinFactory
 	App := GetApp()
 	for _, coin := range Coins {
 		w := performRequest(App, "GET", "/simple/"+coin.Tag)

@@ -3,7 +3,7 @@ package controllers
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/grupokindynos/obol/config"
-	coin_factory "github.com/grupokindynos/obol/models/coin-factory"
+	"github.com/grupokindynos/obol/models/coin-factory"
 	"github.com/grupokindynos/obol/services"
 	"strconv"
 )
@@ -16,7 +16,7 @@ type RateController struct {
 // GetCoinRates will return a rate map based on the selected coin
 func (rc *RateController) GetCoinRates(c *gin.Context) {
 	coin := c.Param("coin")
-	coinData, err := coin_factory.GetCoin(coin)
+	coinData, err := coinfactory.GetCoin(coin)
 	if err != nil {
 		config.GlobalResponse(nil, err, c)
 		return
@@ -31,12 +31,12 @@ func (rc *RateController) GetCoinRates(c *gin.Context) {
 func (rc *RateController) GetCoinRateFromCoinToCoin(c *gin.Context) {
 	fromcoin := c.Param("fromcoin")
 	tocoin := c.Param("tocoin")
-	fromCoinData, err := coin_factory.GetCoin(fromcoin)
+	fromCoinData, err := coinfactory.GetCoin(fromcoin)
 	if err != nil {
 		config.GlobalResponse(nil, err, c)
 		return
 	}
-	toCoinData, err := coin_factory.GetCoin(tocoin)
+	toCoinData, err := coinfactory.GetCoin(tocoin)
 	if err != nil {
 		config.GlobalResponse(nil, err, c)
 		return

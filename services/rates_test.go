@@ -2,7 +2,7 @@ package services
 
 import (
 	"github.com/grupokindynos/obol/config"
-	coin_factory "github.com/grupokindynos/obol/models/coin-factory"
+	"github.com/grupokindynos/obol/models/coin-factory"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )
@@ -31,7 +31,7 @@ func TestRateSevice_GetBtcMxnRate(t *testing.T) {
 }
 
 func TestRateSevice_GetCoinOrdersWall(t *testing.T) {
-	for _, coin := range coin_factory.CoinFactory {
+	for _, coin := range coinfactory.CoinFactory {
 		if coin.Tag == "BTC" {
 			continue
 		}
@@ -42,7 +42,7 @@ func TestRateSevice_GetCoinOrdersWall(t *testing.T) {
 }
 
 func TestRateSevice_GetCoinRates(t *testing.T) {
-	for _, coin := range coin_factory.CoinFactory {
+	for _, coin := range coinfactory.CoinFactory {
 		rates, err := rateService.GetCoinRates(&coin)
 		assert.Nil(t, err)
 		assert.NotZero(t, len(rates))
@@ -50,53 +50,53 @@ func TestRateSevice_GetCoinRates(t *testing.T) {
 }
 
 func TestRateSevice_GetCoinToCoinRatesWithAmount(t *testing.T) {
-	polis := &coin_factory.Polis
-	dash := &coin_factory.Dash
+	polis, _ := coinfactory.GetCoin("polis")
+	dash, _ := coinfactory.GetCoin("dash")
 	rate, err := rateService.GetCoinToCoinRatesWithAmount(polis, dash, 100)
 	assert.Nil(t, err)
 	assert.NotZero(t, rate)
 }
 
 func TestRateSevice_GetCoinToCoinRates(t *testing.T) {
-	polis := &coin_factory.Polis
-	dash := &coin_factory.Dash
+	polis, _ := coinfactory.GetCoin("polis")
+	dash, _ := coinfactory.GetCoin("dash")
 	rate, err := rateService.GetCoinToCoinRates(polis, dash)
 	assert.Nil(t, err)
 	assert.NotZero(t, rate)
 }
 
 func TestRateSevice_GetCoinToCoinRatesWithAmountSameParams(t *testing.T) {
-	polis := &coin_factory.Polis
+	polis, _ := coinfactory.GetCoin("polis")
 	rate, err := rateService.GetCoinToCoinRatesWithAmount(polis, polis, 100)
 	assert.Zero(t, rate)
 	assert.Equal(t, config.ErrorNoC2CWithSameCoin, err)
 }
 
 func TestRateSevice_GetCoinToCoinRatesSameParams(t *testing.T) {
-	polis := &coin_factory.Polis
+	polis, _ := coinfactory.GetCoin("polis")
 	rate, err := rateService.GetCoinToCoinRates(polis, polis)
 	assert.Zero(t, rate)
 	assert.Equal(t, config.ErrorNoC2CWithSameCoin, err)
 }
 
 func TestRateSevice_GetCoinToCoinRatesWithAmountBTC(t *testing.T) {
-	polis := &coin_factory.Polis
-	btc := &coin_factory.Bitcoin
+	polis, _ := coinfactory.GetCoin("polis")
+	btc, _ := coinfactory.GetCoin("btc")
 	rate, err := rateService.GetCoinToCoinRatesWithAmount(btc, polis, 100)
 	assert.Zero(t, rate)
 	assert.Equal(t, config.ErrorNoC2CWithBTC, err)
 }
 
 func TestRateSevice_GetCoinToCoinRatesBTC(t *testing.T) {
-	polis := &coin_factory.Polis
-	btc := &coin_factory.Bitcoin
+	polis, _ := coinfactory.GetCoin("polis")
+	btc, _ := coinfactory.GetCoin("btc")
 	rate, err := rateService.GetCoinToCoinRates(btc, polis)
 	assert.Zero(t, rate)
 	assert.Equal(t, config.ErrorNoC2CWithBTC, err)
 }
 
 func TestNoServiceForCoin(t *testing.T) {
-	mockCoin := &coin_factory.Coin{Tag: "FaKeCOIN", Name: "FakeCoin"}
+	mockCoin := &coinfactory.Coin{Tag: "FaKeCOIN", Name: "FakeCoin"}
 	_, err := rateService.GetCoinOrdersWall(mockCoin)
 	assert.Equal(t, config.ErrorNoServiceForCoin, err)
 	_, err = rateService.GetCoinRates(mockCoin)

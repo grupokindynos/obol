@@ -3,6 +3,7 @@ package main
 import (
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
+	"github.com/grupokindynos/obol/api"
 	"github.com/joho/godotenv"
 	"log"
 	"os"
@@ -23,6 +24,6 @@ func main() {
 func GetApp() *gin.Engine {
 	App := gin.Default()
 	App.Use(cors.Default())
-	ApplyRoutes(App)
+	api.ApplyRoutes(App)
 	return App
 }

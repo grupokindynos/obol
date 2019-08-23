@@ -1,8 +1,16 @@
 package config
 
-import "github.com/gin-gonic/gin"
+import (
+	"github.com/gin-gonic/gin"
+	"net/http"
+	"time"
+)
 
-var BitpayRatesURL = "https://bitpay.com/rates"
+var OpenRatesURL = "https://api.exchangeratesapi.io/latest?base=MXN"
+
+var HttpClient = &http.Client{
+	Timeout: time.Second * 10,
+}
 
 func GlobalResponse(result interface{}, err error, c *gin.Context) *gin.Context {
 	if err != nil {

@@ -16,7 +16,7 @@ func TestRateController_GetCoinRateFromCoinToCoin(t *testing.T) {
 	resp := httptest.NewRecorder()
 	gin.SetMode(gin.TestMode)
 	c, _ := gin.CreateTestContext(resp)
-	c.Params = gin.Params{gin.Param{Key: "fromcoin", Value: "polis"}, gin.Param{Key:"tocoin", Value: "dash"}}
+	c.Params = gin.Params{gin.Param{Key: "fromcoin", Value: "polis"}, gin.Param{Key: "tocoin", Value: "dash"}}
 	c.Request, _ = http.NewRequest("GET", "", nil)
 	rateCtrl.GetCoinRateFromCoinToCoin(c)
 	var response map[string]interface{}
@@ -32,7 +32,7 @@ func TestRateController_GetCoinRateFromCoinToCoinWithAmount(t *testing.T) {
 	resp := httptest.NewRecorder()
 	gin.SetMode(gin.TestMode)
 	c, _ := gin.CreateTestContext(resp)
-	c.Params = gin.Params{gin.Param{Key: "fromcoin", Value: "polis"}, gin.Param{Key:"tocoin", Value: "dash"}}
+	c.Params = gin.Params{gin.Param{Key: "fromcoin", Value: "polis"}, gin.Param{Key: "tocoin", Value: "dash"}}
 	c.Request, _ = http.NewRequest("GET", "?amount=1000", nil)
 	rateCtrl.GetCoinRateFromCoinToCoin(c)
 	var response map[string]interface{}
@@ -48,7 +48,7 @@ func TestRateController_GetCoinRateFromCoinToCoinWithAmountInvalid(t *testing.T)
 	resp := httptest.NewRecorder()
 	gin.SetMode(gin.TestMode)
 	c, _ := gin.CreateTestContext(resp)
-	c.Params = gin.Params{gin.Param{Key: "fromcoin", Value: "polis"}, gin.Param{Key:"tocoin", Value: "dash"}}
+	c.Params = gin.Params{gin.Param{Key: "fromcoin", Value: "polis"}, gin.Param{Key: "tocoin", Value: "dash"}}
 	c.Request, _ = http.NewRequest("GET", "?amount=test", nil)
 	rateCtrl.GetCoinRateFromCoinToCoin(c)
 	var response map[string]interface{}

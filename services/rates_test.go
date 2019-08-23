@@ -32,7 +32,9 @@ func TestRateSevice_GetBtcMxnRate(t *testing.T) {
 
 func TestRateSevice_GetCoinOrdersWall(t *testing.T) {
 	for _, coin := range coin_factory.CoinFactory {
-		if coin.Tag == "BTC" { continue }
+		if coin.Tag == "BTC" {
+			continue
+		}
 		orders, err := rateService.GetCoinOrdersWall(&coin)
 		assert.Nil(t, err)
 		assert.NotZero(t, len(orders))

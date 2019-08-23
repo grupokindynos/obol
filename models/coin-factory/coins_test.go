@@ -1,4 +1,4 @@
-package coin_factory
+package coinfactory
 
 import (
 	"github.com/grupokindynos/obol/config"

@@ -1,10 +1,11 @@
-package coin_factory
+package coinfactory
 
 import (
 	"github.com/grupokindynos/obol/config"
 	"strings"
 )
 
+// Coin is the basic coin structure to get the correct properties for each coin.
 type Coin struct {
 	Tag      string
 	Name     string
@@ -12,73 +13,76 @@ type Coin struct {
 }
 
 var (
-	Bitcoin = Coin{
+	bitcoin = Coin{
 		Tag:      "BTC",
 		Name:     "bitcoin",
 		Exchange: "bitso",
 	}
-	ColossusXT = Coin{
+	colossus = Coin{
 		Tag:      "COLX",
 		Name:     "colossus",
 		Exchange: "cryptobridge",
 	}
-	Dash = Coin{
+	dash = Coin{
 		Tag:      "DASH",
 		Name:     "dash",
 		Exchange: "binance",
 	}
-	DigiByte = Coin{
+	digibyte = Coin{
 		Tag:      "DGB",
 		Name:     "digibyte",
 		Exchange: "bittrex",
 	}
-	GroestlCoin = Coin{
+	groestlcoin = Coin{
 		Tag:      "GRS",
 		Name:     "groestlcoin",
 		Exchange: "binance",
 	}
-	Litecoin = Coin{
+	litecoin = Coin{
 		Tag:      "LTC",
 		Name:     "litecoin",
 		Exchange: "binance",
 	}
-	MNPCoin = Coin{
+	mnpcoin = Coin{
 		Tag:      "MNP",
 		Name:     "mnpcoin",
 		Exchange: "crex24",
 	}
-	Polis = Coin{
+	polis = Coin{
 		Tag:      "POLIS",
 		Name:     "polis",
 		Exchange: "cryptobridge",
 	}
-	SnowGem = Coin{
+	snowgem = Coin{
 		Tag:      "XSG",
 		Name:     "snowgem",
 		Exchange: "stex",
 	}
-	ZCoin = Coin{
+	zcoin = Coin{
 		Tag:      "XZC",
 		Name:     "zcoin",
 		Exchange: "binance",
 	}
 )
 
+//Coins is the main array where used coins are stored
 type Coins []Coin
 
+//CoinFactory refers to the coins that are being used on the API instance
 var CoinFactory = Coins{
-	Bitcoin,
-	Polis,
-	Dash,
-	Litecoin,
-	DigiByte,
-	GroestlCoin,
-	ZCoin,
-	ColossusXT,
-	MNPCoin,
-	SnowGem,
+	bitcoin,
+	polis,
+	dash,
+	litecoin,
+	digibyte,
+	groestlcoin,
+	zcoin,
+	colossus,
+	mnpcoin,
+	snowgem,
 }
 
+//GetCoin is the safe way to check if a coin exists and retrieve the coin data
 func GetCoin(tag string) (*Coin, error) {
 	for _, v := range CoinFactory {
 		if v.Tag == strings.ToUpper(tag) {

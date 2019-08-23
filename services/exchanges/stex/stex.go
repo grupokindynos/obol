@@ -33,9 +33,6 @@ func (s Service) CoinRate(coin string) (rate float64, err error) {
 			_ = res.Body.Close()
 		}()
 		contents, err := ioutil.ReadAll(res.Body)
-		if err != nil {
-			return rate, err
-		}
 		var Response exchanges.StexRate
 		err = json.Unmarshal(contents, &Response)
 		if err != nil {
@@ -62,14 +59,8 @@ func (s *Service) CoinMarketOrders(coin string) (orders []models.MarketOrder, er
 			_ = res.Body.Close()
 		}()
 		contents, err := ioutil.ReadAll(res.Body)
-		if err != nil {
-			return orders, err
-		}
 		var Response exchanges.StexMarkets
 		err = json.Unmarshal(contents, &Response)
-		if err != nil {
-			return orders, err
-		}
 		for _, ask := range Response.Data.Ask {
 			price, _ := strconv.ParseFloat(ask.Price, 64)
 			amount, _ := strconv.ParseFloat(ask.Amount, 64)

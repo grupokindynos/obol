@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/grupokindynos/obol/config"
 	coin_factory "github.com/grupokindynos/obol/models/coin-factory"
@@ -50,6 +51,7 @@ func (rc *RateController) GetCoinRateFromCoinToCoin(c *gin.Context) {
 		return
 	} else {
 		rates, err := rc.RateService.GetCoinToCoinRates(fromCoinData, toCoinData)
+		fmt.Println(rates, err)
 		config.GlobalResponse(rates, err, c)
 		return
 	}

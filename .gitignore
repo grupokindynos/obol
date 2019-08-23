@@ -15,3 +15,6 @@
 .idea/
 .env
 obol*
+
+# Codecov
+coverage.txt

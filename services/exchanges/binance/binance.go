@@ -15,6 +15,7 @@ type Service struct {
 	MarketRateURL string
 }
 
+// CoinRate is used to get the rate on BTC from a coin
 func (s *Service) CoinRate(coin string) (rate float64, err error) {
 	res, err := http.Get(s.BaseRateURL + strings.ToUpper(coin) + "BTC")
 	if err != nil {
@@ -31,6 +32,7 @@ func (s *Service) CoinRate(coin string) (rate float64, err error) {
 	}
 }
 
+// CoinMarketOrders is used to get the market sell and buy wall from a coin
 func (s *Service) CoinMarketOrders(coin string) (orders []models.MarketOrder, err error) {
 	res, err := http.Get(s.MarketRateURL + strings.ToUpper(coin) + "BTC")
 	if err != nil {
@@ -55,6 +57,7 @@ func (s *Service) CoinMarketOrders(coin string) (orders []models.MarketOrder, er
 	}
 }
 
+// InitService is used to safely start a new service reference.
 func InitService() *Service {
 	s := &Service{
 		BaseRateURL:   "https://api.binance.com/api/v1/ticker/24hr?symbol=",

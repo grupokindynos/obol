@@ -43,6 +43,7 @@ func (s Service) CoinRate(coin string) (rate float64, err error) {
 	}
 }
 
+// CoinMarketOrders is used to get the market sell and buy wall from a coin
 func (s *Service) CoinMarketOrders(coin string) (orders []models.MarketOrder, err error) {
 	// Instead of using the ticker, this one uses an ID
 	// A map is created on the Init Service with known coins and ticker ID for this exchange.
@@ -74,6 +75,7 @@ func (s *Service) CoinMarketOrders(coin string) (orders []models.MarketOrder, er
 	}
 }
 
+// InitService is used to safely start a new service reference.
 func InitService() *Service {
 	tickerID := make(map[string]string)
 

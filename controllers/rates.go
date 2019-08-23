@@ -8,10 +8,12 @@ import (
 	"strconv"
 )
 
+// RateController is the main type for serving the API routes.
 type RateController struct {
 	RateService *services.RateSevice
 }
 
+// GetCoinRates will return a rate map based on the selected coin
 func (rc *RateController) GetCoinRates(c *gin.Context) {
 	coin := c.Param("coin")
 	coinData, err := coin_factory.GetCoin(coin)
@@ -24,6 +26,8 @@ func (rc *RateController) GetCoinRates(c *gin.Context) {
 	return
 }
 
+// GetCoinRateFromCoinToCoin will return the rate converting from the first coin to the second coin
+// There is also the option of sending the amount trough a query
 func (rc *RateController) GetCoinRateFromCoinToCoin(c *gin.Context) {
 	fromcoin := c.Param("fromcoin")
 	tocoin := c.Param("tocoin")

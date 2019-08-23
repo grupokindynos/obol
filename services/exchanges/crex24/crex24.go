@@ -29,6 +29,7 @@ func (s Service) CoinRate(coin string) (rate float64, err error) {
 	}
 }
 
+// CoinMarketOrders is used to get the market sell and buy wall from a coin
 func (s *Service) CoinMarketOrders(coin string) (orders []models.MarketOrder, err error) {
 	res, err := http.Get(s.MarketRateURL + strings.ToUpper(coin) + "-BTC")
 	if err != nil {
@@ -51,6 +52,7 @@ func (s *Service) CoinMarketOrders(coin string) (orders []models.MarketOrder, er
 	}
 }
 
+// InitService is used to safely start a new service reference.
 func InitService() *Service {
 	s := &Service{
 		BaseRateURL:   "https://api.crex24.com/CryptoExchangeService/BotPublic/ReturnTicker?request=",

@@ -20,6 +20,7 @@ import (
 
 const UpdateFiatRatesTimeFrame = 60 * 60 // 1 Hour timeframe
 
+//Exchange is the interface to make sure all exchange services have the same properties
 type Exchange interface {
 	CoinRate(coin string) (rate float64, err error)
 	CoinMarketOrders(coin string) (orders []models.MarketOrder, err error)
@@ -29,7 +30,7 @@ var FiatRates *models.FiatRates
 
 type RateSevice struct {
 	FiatRates           *models.FiatRates
-	BittrexService 		*bittrex.Service
+	BittrexService      *bittrex.Service
 	BinanceService      *binance.Service
 	CryptoBridgeService *cryptobridge.Service
 	Crex24Service       *crex24.Service
@@ -200,13 +201,11 @@ func loadFiatRates() {
 	}
 }
 
-
-
 func InitRateService() *RateSevice {
 	loadFiatRates()
 	rs := &RateSevice{
 		FiatRates:           FiatRates,
-		BittrexService: bittrex.InitService(),
+		BittrexService:      bittrex.InitService(),
 		BinanceService:      binance.InitService(),
 		CryptoBridgeService: cryptobridge.InitService(),
 		Crex24Service:       crex24.InitService(),

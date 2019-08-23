@@ -92,3 +92,11 @@ func TestRateSevice_GetCoinToCoinRatesBTC(t *testing.T) {
 	assert.Zero(t, rate)
 	assert.Equal(t, config.ErrorNoC2CWithBTC, err)
 }
+
+func TestNoServiceForCoin(t *testing.T) {
+	mockCoin := &coin_factory.Coin{Tag: "FaKeCOIN", Name: "FakeCoin"}
+	_, err := rateService.GetCoinOrdersWall(mockCoin)
+	assert.Equal(t, config.ErrorNoServiceForCoin, err)
+	_, err = rateService.GetCoinRates(mockCoin)
+	assert.Equal(t, config.ErrorNoServiceForCoin, err)
+}

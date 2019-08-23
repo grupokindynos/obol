@@ -2,7 +2,7 @@ package main
 
 import (
 	"encoding/json"
-	"github.com/gin-gonic/gin"
+	coin_factory "github.com/grupokindynos/obol/models/coin-factory"
 	"github.com/stretchr/testify/assert"
 	"net/http"
 	"net/http/httptest"
@@ -16,41 +16,17 @@ func performRequest(r http.Handler, method, path string) *httptest.ResponseRecor
 	return w
 }
 
-func TestPolisRates(t *testing.T) {
-	Body := gin.H{"status":  float64(1)}
+func TestSimpleRates(t *testing.T) {
+	Coins := coin_factory.CoinFactory
 	App := GetApp()
-	w := performRequest(App, "GET", "/simple/polis")
-	assert.Equal(t, http.StatusOK, w.Code)
-	var response map[string]interface{}
-	err := json.Unmarshal(w.Body.Bytes(), &response)
-	value, exists := response["status"]
-	assert.Nil(t, err)
-	assert.True(t, exists)
-	assert.Equal(t, Body["status"], value)
-}
-
-func TestBtcRates(t *testing.T) {
-	Body := gin.H{"status":  float64(1)}
-	App := GetApp()
-	w := performRequest(App, "GET", "/simple/btc")
-	assert.Equal(t, http.StatusOK, w.Code)
-	var response map[string]interface{}
-	err := json.Unmarshal(w.Body.Bytes(), &response)
-	value, exists := response["status"]
-	assert.Nil(t, err)
-	assert.True(t, exists)
-	assert.Equal(t, Body["status"], value)
-}
-
-func TestDashRates(t *testing.T) {
-	Body := gin.H{"status":  float64(1)}
-	App := GetApp()
-	w := performRequest(App, "GET", "/simple/dash")
-	assert.Equal(t, http.StatusOK, w.Code)
-	var response map[string]interface{}
-	err := json.Unmarshal(w.Body.Bytes(), &response)
-	value, exists := response["status"]
-	assert.Nil(t, err)
-	assert.True(t, exists)
-	assert.Equal(t, Body["status"], value)
+	for _, coin := range Coins {
+		w := performRequest(App, "GET", "/simple/" + coin.Tag)
+		assert.Equal(t, http.StatusOK, w.Code)
+		var response map[string]interface{}
+		err := json.Unmarshal(w.Body.Bytes(), &response)
+		value, exists := response["status"]
+		assert.Nil(t, err)
+		assert.True(t, exists)
+		assert.Equal(t, float64(1), value)
+	}
 }

@@ -1,12 +1,17 @@
 package main
 
 import (
+	"github.com/eabz/cache"
+	"github.com/eabz/cache/persistence"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
-	"github.com/grupokindynos/obol/api"
+	"github.com/grupokindynos/obol/controllers"
+	"github.com/grupokindynos/obol/services"
 	"github.com/joho/godotenv"
 	"log"
+	"net/http"
 	"os"
+	"time"
 )
 
 func init() {
@@ -24,6 +29,20 @@ func main() {
 func GetApp() *gin.Engine {
 	App := gin.Default()
 	App.Use(cors.Default())
-	api.ApplyRoutes(App)
+	ApplyRoutes(App)
 	return App
+}
+
+func ApplyRoutes(r *gin.Engine) {
+	api := r.Group("/")
+	{
+		store := persistence.NewInMemoryStore(time.Second)
+		rateService := services.InitRateService()
+		rateCtrl := controllers.RateController{RateService: rateService}
+		api.GET("simple/:coin", cache.CachePage(store, time.Minute*5, rateCtrl.GetCoinRates))
+		api.GET("complex/:fromcoin/:tocoin", cache.CachePage(store, time.Minute*5, rateCtrl.GetCoinRateFromCoinToCoin))
+	}
+	r.NoRoute(func(c *gin.Context) {
+		c.String(http.StatusNotFound, "Not Found")
+	})
 }

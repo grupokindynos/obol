@@ -1,7 +1,6 @@
 package controllers
 
 import (
-	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/grupokindynos/obol/config"
 	coin_factory "github.com/grupokindynos/obol/models/coin-factory"
@@ -38,12 +37,11 @@ func (rc *RateController) GetCoinRateFromCoinToCoin(c *gin.Context) {
 		config.GlobalResponse(nil, err, c)
 		return
 	}
-	query := c.Request.URL.Query()
-	amount, reqAmount := query["amount"]
-	if reqAmount {
-		amountNum, err := strconv.ParseFloat(amount[0], 64)
+	amount := c.Query("amount")
+	if amount != "" {
+		amountNum, err := strconv.ParseFloat(amount, 64)
 		if err != nil {
-			config.GlobalResponse(nil, config.ErrorUnableToParseStringToFloat, c)
+			config.GlobalResponse(nil, config.ErrorInvalidAmountOnC2C, c)
 			return
 		}
 		rates, err := rc.RateService.GetCoinToCoinRatesWithAmount(fromCoinData, toCoinData, amountNum)
@@ -51,7 +49,6 @@ func (rc *RateController) GetCoinRateFromCoinToCoin(c *gin.Context) {
 		return
 	} else {
 		rates, err := rc.RateService.GetCoinToCoinRates(fromCoinData, toCoinData)
-		fmt.Println(rates, err)
 		config.GlobalResponse(rates, err, c)
 		return
 	}

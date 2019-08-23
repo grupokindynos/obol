@@ -14,6 +14,7 @@ var (
 	ErrorNoServiceForCoin           = errors.New("unable to load exchange for this coin")
 	ErrorNoC2CWithBTC           	= errors.New("coin to coin function doesn't work using BTC")
 	ErrorNoC2CWithSameCoin          = errors.New("cannot use the same coin on both parameters")
+	ErrorInvalidAmountOnC2C         = errors.New("invalid amount to convert from coin to coin")
 	HttpClient                      = &http.Client{
 		Timeout: time.Second * 10,
 	}

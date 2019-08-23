@@ -28,6 +28,13 @@ func TestSimpleRates(t *testing.T) {
 		assert.Nil(t, err)
 		assert.True(t, exists)
 		assert.Equal(t, float64(1), value)
+		ratesData := response["data"]
+		var ratesMap map[string]float64
+		ratesBytes, err := json.Marshal(ratesData)
+		assert.Nil(t, err)
+		err = json.Unmarshal(ratesBytes, &ratesMap)
+		assert.Nil(t, err)
+		assert.NotZero(t, ratesMap["BTC"])
 	}
 }
 

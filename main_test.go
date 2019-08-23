@@ -30,3 +30,9 @@ func TestSimpleRates(t *testing.T) {
 		assert.Equal(t, float64(1), value)
 	}
 }
+
+func TestNonExistingRoute(t *testing.T) {
+	App := GetApp()
+	w := performRequest(App, "GET", "/none")
+	assert.Equal(t, http.StatusNotFound, w.Code)
+}

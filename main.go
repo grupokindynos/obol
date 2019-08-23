@@ -8,7 +8,6 @@ import (
 	"github.com/grupokindynos/obol/controllers"
 	"github.com/grupokindynos/obol/services"
 	"github.com/joho/godotenv"
-	"log"
 	"net/http"
 	"os"
 	"time"
@@ -19,11 +18,11 @@ func init() {
 }
 func main() {
 	port := os.Getenv("PORT")
-	App := GetApp()
-	err := App.Run(":" + port)
-	if err != nil {
-		log.Panic(err)
+	if port == "" {
+		port = "8080"
 	}
+	App := GetApp()
+	_ = App.Run(":" + port)
 }
 
 func GetApp() *gin.Engine {

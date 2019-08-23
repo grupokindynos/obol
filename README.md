@@ -12,6 +12,33 @@ Obol is a microservice API for multiple cryptocurrency rates.
 
 ## Building
 
+To run Obol simply clone de repository:
+
+```
+git clone https://github.com/grupokindynos/obol 
+```
+
+Build it or Run it:
+```
+go build && ./obol
+```
+```
+go run main.go
+```
+
+Make sure the port is configured under en enviroment variable `PORT=8080`
+
 ## Testing
 
+Simply run:
+```
+go test ./...
+```
+
 ## Contributing
+
+Pull Requests accepted.
+
+To add a new coin, please add a new coin configuration under `models/coin-factory/coins.go`
+
+To add a new exchange please add it to `services/exchanges/` under a new folder with same functions and test cases.

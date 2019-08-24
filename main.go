@@ -7,6 +7,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/grupokindynos/obol/controllers"
 	"github.com/grupokindynos/obol/services"
+	_ "github.com/heroku/x/hmetrics/onload"
 	"github.com/joho/godotenv"
 	"net/http"
 	"os"

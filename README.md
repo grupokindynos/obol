@@ -35,7 +35,7 @@ Make sure the port is configured under en enviroment variable `PORT=8080`
 
 Retrieves the rate to many currencies for one coin.
 
-GET method:
+**GET method:**
 
 ```
 https://obol-rates.herokuapp.com/simple/:coin
@@ -84,11 +84,11 @@ This will retrieve an array with rates result based on exchange real time price:
 }
 ```
 
-### Get Rates from Coin to Coin:
+### Get Rates from one coin to another:
 
 Retrieves the rate from one coin to another.
 
-GET method:
+**GET method:**
 
 ```
 https://obol-rates.herokuapp.com/complex/:fromcoin/:tocoin
@@ -107,7 +107,7 @@ This will get the current amount you need to convert from one coin to another:
 
 Retrieves the rate from one coin to another, provided the amount of coins you want to convert.
 
-GET method:
+**GET method:**
 
 ```
 https://obol-rates.herokuapp.com/complex/:fromcoin/:tocoin?amount=100

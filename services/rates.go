@@ -48,18 +48,17 @@ func (rs *RateSevice) GetCoinRates(coin *coinfactory.Coin) (rates map[string]flo
 			btcRatesMap[code] = rate
 		}
 		return btcRatesMap, nil
-	} else {
-		rate, err := rs.GetCoinExchangeRate(coin)
-		newRates := make(map[string]float64)
-		for code, singleRate := range btcRates {
-			if code == "BTC" {
-				newRates[code] = math.Floor((rate*singleRate)*1e8) / 1e8
-			} else {
-				newRates[code] = math.Floor((rate*singleRate)*10000) / 10000
-			}
-		}
-		return newRates, err
 	}
+	rate, err := rs.GetCoinExchangeRate(coin)
+	newRates := make(map[string]float64)
+	for code, singleRate := range btcRates {
+		if code == "BTC" {
+			newRates[code] = math.Floor((rate*singleRate)*1e8) / 1e8
+		} else {
+			newRates[code] = math.Floor((rate*singleRate)*10000) / 10000
+		}
+	}
+	return newRates, err
 }
 
 func (rs *RateSevice) GetCoinToCoinRates(coinFrom *coinfactory.Coin, coinTo *coinfactory.Coin) (rate float64, err error) {
@@ -164,16 +163,15 @@ func (rs *RateSevice) GetBtcMxnRate() (float64, error) {
 	res, err := config.HttpClient.Get("https://api.bitso.com/v3/ticker/?book=btc_mxn")
 	if err != nil {
 		return 0, err
-	} else {
-		defer func() {
-			_ = res.Body.Close()
-		}()
-		contents, _ := ioutil.ReadAll(res.Body)
-		var bitsoRates exchanges.BitsoRates
-		err = json.Unmarshal(contents, &bitsoRates)
-		rate, err := strconv.ParseFloat(bitsoRates.Payload.Last, 64)
-		return rate, err
 	}
+	defer func() {
+		_ = res.Body.Close()
+	}()
+	contents, _ := ioutil.ReadAll(res.Body)
+	var bitsoRates exchanges.BitsoRates
+	err = json.Unmarshal(contents, &bitsoRates)
+	rate, err := strconv.ParseFloat(bitsoRates.Payload.Last, 64)
+	return rate, err
 }
 
 func (rs *RateSevice) GetBtcRates() (rates map[string]float64, err error) {

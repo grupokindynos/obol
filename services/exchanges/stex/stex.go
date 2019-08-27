@@ -28,19 +28,18 @@ func (s Service) CoinRate(coin string) (rate float64, err error) {
 	res, err := http.Get(s.BaseRateURL + value)
 	if err != nil {
 		return rate, err
-	} else {
-		defer func() {
-			_ = res.Body.Close()
-		}()
-		contents, err := ioutil.ReadAll(res.Body)
-		var Response exchanges.StexRate
-		err = json.Unmarshal(contents, &Response)
-		if err != nil {
-			return rate, err
-		}
-		rate, err := strconv.ParseFloat(Response.Data.Last, 64)
+	}
+	defer func() {
+		_ = res.Body.Close()
+	}()
+	contents, err := ioutil.ReadAll(res.Body)
+	var Response exchanges.StexRate
+	err = json.Unmarshal(contents, &Response)
+	if err != nil {
 		return rate, err
 	}
+	rate, err = strconv.ParseFloat(Response.Data.Last, 64)
+	return rate, err
 }
 
 // CoinMarketOrders is used to get the market sell and buy wall from a coin
@@ -55,24 +54,23 @@ func (s *Service) CoinMarketOrders(coin string) (orders []models.MarketOrder, er
 	res, err := http.Get(s.MarketRateURL + value)
 	if err != nil {
 		return orders, err
-	} else {
-		defer func() {
-			_ = res.Body.Close()
-		}()
-		contents, err := ioutil.ReadAll(res.Body)
-		var Response exchanges.StexMarkets
-		err = json.Unmarshal(contents, &Response)
-		for _, ask := range Response.Data.Ask {
-			price, _ := strconv.ParseFloat(ask.Price, 64)
-			amount, _ := strconv.ParseFloat(ask.Amount, 64)
-			newOrder := models.MarketOrder{
-				Price:  price,
-				Amount: amount,
-			}
-			orders = append(orders, newOrder)
-		}
-		return orders, err
 	}
+	defer func() {
+		_ = res.Body.Close()
+	}()
+	contents, err := ioutil.ReadAll(res.Body)
+	var Response exchanges.StexMarkets
+	err = json.Unmarshal(contents, &Response)
+	for _, ask := range Response.Data.Ask {
+		price, _ := strconv.ParseFloat(ask.Price, 64)
+		amount, _ := strconv.ParseFloat(ask.Amount, 64)
+		newOrder := models.MarketOrder{
+			Price:  price,
+			Amount: amount,
+		}
+		orders = append(orders, newOrder)
+	}
+	return orders, err
 }
 
 // InitService is used to safely start a new service reference.

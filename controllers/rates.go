@@ -51,9 +51,8 @@ func (rc *RateController) GetCoinRateFromCoinToCoin(c *gin.Context) {
 		rates, err := rc.RateService.GetCoinToCoinRatesWithAmount(fromCoinData, toCoinData, amountNum)
 		config.GlobalResponse(rates, err, c)
 		return
-	} else {
-		rates, err := rc.RateService.GetCoinToCoinRates(fromCoinData, toCoinData)
-		config.GlobalResponse(rates, err, c)
-		return
 	}
+	rates, err := rc.RateService.GetCoinToCoinRates(fromCoinData, toCoinData)
+	config.GlobalResponse(rates, err, c)
+	return
 }

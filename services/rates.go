@@ -63,8 +63,13 @@ func (rs *RateSevice) GetCoinRates(coin *coinfactory.Coin) (rates map[string]flo
 }
 
 func (rs *RateSevice) GetCoinToCoinRates(coinFrom *coinfactory.Coin, coinTo *coinfactory.Coin) (rate float64, err error) {
-	if coinFrom.Tag == "BTC" || coinTo.Tag == "BTC" {
-		return rate, config.ErrorNoC2CWithBTC
+	if coinFrom.Tag == "BTC" {
+		coinRates, err := rs.GetCoinRates(coinTo)
+		return coinRates["BTC"], err
+	}
+	if coinTo.Tag == "BTC" {
+		coinRates, err := rs.GetCoinRates(coinFrom)
+		return 1 / coinRates["BTC"], err
 	}
 	if coinFrom.Tag == coinTo.Tag {
 		return rate, config.ErrorNoC2CWithSameCoin
@@ -73,18 +78,19 @@ func (rs *RateSevice) GetCoinToCoinRates(coinFrom *coinfactory.Coin, coinTo *coi
 	coinToRates, err := rs.GetCoinRates(coinTo)
 	coinFromCommonRate := coinFromRates["BTC"]
 	coinToCommonRate := coinToRates["BTC"]
-	rate = math.Floor(coinToCommonRate/coinFromCommonRate*1e8) / 1e8
-	return rate, err
+	return coinToCommonRate/coinFromCommonRate, err
 }
 
 func (rs *RateSevice) GetCoinToCoinRatesWithAmount(coinFrom *coinfactory.Coin, coinTo *coinfactory.Coin, amount float64) (rate float64, err error) {
-	if coinFrom.Tag == "BTC" || coinTo.Tag == "BTC" {
+	if coinFrom.Tag == "BTC" {
 		return rate, config.ErrorNoC2CWithBTC
 	}
 	if coinFrom.Tag == coinTo.Tag {
 		return rate, config.ErrorNoC2CWithSameCoin
 	}
+	// First get the orders wall from the coin we are converting
 	coinFromMarkets, err := rs.GetCoinOrdersWall(coinFrom)
+	// Get BTC rate of the coin.
 	coinToRates, err := rs.GetCoinRates(coinTo)
 	coinToBTCRate := coinToRates["BTC"]
 	var countedAmount float64
@@ -105,7 +111,8 @@ func (rs *RateSevice) GetCoinToCoinRatesWithAmount(coinFrom *coinfactory.Coin, c
 			break
 		}
 	}
-	finaleRate := math.Floor((pricesSum/coinToBTCRate)*1e8) / 1e8
+	priceTrunk := math.Floor(pricesSum*1e8) / 1e8
+	finaleRate := coinToBTCRate/priceTrunk
 	return finaleRate, err
 }
 

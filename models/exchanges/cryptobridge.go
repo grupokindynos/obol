@@ -1,5 +1,6 @@
 package exchanges
 
+// CryptoBridgeRate is the response of the rates query on CryptoBridge Exchange
 type CryptoBridgeRate struct {
 	ID            string  `json:"id"`
 	Last          string  `json:"last"`
@@ -9,6 +10,7 @@ type CryptoBridgeRate struct {
 	PercentChange float64 `json:"percentChange"`
 }
 
+// CryptoBridgeMarkets is the response of the market depth query on CryptoBridge Exchange
 type CryptoBridgeMarkets struct {
 	Bids []struct {
 		Price  string `json:"price"`

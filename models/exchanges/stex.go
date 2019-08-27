@@ -1,5 +1,6 @@
 package exchanges
 
+// StexRate is the response of the rates query on Stex Exchange
 type StexRate struct {
 	Success bool `json:"success"`
 	Data    struct {
@@ -41,6 +42,7 @@ type StexRate struct {
 	} `json:"data"`
 }
 
+// StexMarkets is the response of the market depth query on Stex Exchange
 type StexMarkets struct {
 	Success bool `json:"success"`
 	Data    struct {

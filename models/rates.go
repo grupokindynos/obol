@@ -2,21 +2,25 @@ package models
 
 import "time"
 
+// MarketOrder is just a simple struct to homologue the exchange responses
 type MarketOrder struct {
 	Amount float64 `json:"amount"`
 	Price  float64 `json:"price"`
 }
 
+// FiatRates is the struct to handle internally the OpenRate response
 type FiatRates struct {
 	Rates       map[string]float64
 	LastUpdated time.Time
 }
 
+// Rate is the struct to homologue exchange rate responses
 type Rate struct {
 	Code string  `json:"code"`
 	Rate float64 `json:"rate"`
 }
 
+// OpenRate is the structure of the OpenRate response
 type OpenRates struct {
 	Rates struct {
 		CAD float64 `json:"CAD"`

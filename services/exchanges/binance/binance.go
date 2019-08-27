@@ -24,9 +24,9 @@ func (s *Service) CoinRate(coin string) (rate float64, err error) {
 		defer func() {
 			_ = res.Body.Close()
 		}()
-		contents, err := ioutil.ReadAll(res.Body)
+		contents, _ := ioutil.ReadAll(res.Body)
 		var Response exchanges.BinanceRate
-		err = json.Unmarshal(contents, &Response)
+		_ = json.Unmarshal(contents, &Response)
 		rate, err := strconv.ParseFloat(Response.LastPrice, 64)
 		return rate, err
 	}

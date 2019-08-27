@@ -2,6 +2,7 @@ package exchanges
 
 import "time"
 
+// BitsoRates is the response of the rates query on Bitso Exchange
 type BitsoRates struct {
 	Success bool `json:"success"`
 	Payload struct {

@@ -1,5 +1,6 @@
 package exchanges
 
+// Crex24Rates is the response of the rates query on Crex24 Exchange
 type Crex24Rates struct {
 	Error   interface{} `json:"Error"`
 	Tickers []struct {
@@ -16,6 +17,7 @@ type Crex24Rates struct {
 	} `json:"Tickers"`
 }
 
+// Crex24Markets is the response of the market depth query on Crex24 Exchange
 type Crex24Markets struct {
 	BuyLevels []struct {
 		Price  float64 `json:"price"`

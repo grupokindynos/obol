@@ -95,7 +95,7 @@ func (rs *RateSevice) GetCoinToCoinRatesWithAmount(coinFrom *coinfactory.Coin, c
 	// Init vars for loop
 	var countedAmount float64
 	var pricesSum float64
-	// Looping agains values on exchange to make a approachable rate based on the amount.
+	// Looping against values on exchange to make a approachable rate based on the amount.
 	for _, order := range coinFromMarkets {
 		if countedAmount+order.Amount >= amount {
 			diff := math.Abs((countedAmount + order.Amount) - amount)

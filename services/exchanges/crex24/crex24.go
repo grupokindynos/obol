@@ -9,6 +9,7 @@ import (
 	"strings"
 )
 
+// Service is a common structure for a exchange
 type Service struct {
 	BaseRateURL   string
 	MarketRateURL string

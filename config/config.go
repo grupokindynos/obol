@@ -3,6 +3,7 @@ package config
 import (
 	"errors"
 	"github.com/gin-gonic/gin"
+	"math"
 	"net/http"
 	"time"
 )
@@ -25,8 +26,16 @@ var (
 func GlobalResponse(result interface{}, err error, c *gin.Context) *gin.Context {
 	if err != nil {
 		c.JSON(500, gin.H{"message": "Error", "error": err.Error(), "status": -1})
+		return c
 	} else {
+		// If is a float, truncate it to sats
+		value, isfloat := result.(float64)
+		if isfloat {
+			value := math.Floor(value * 1e8) / 1e8
+			c.JSON(200, gin.H{"data": value, "status": 1})
+			return c
+		}
 		c.JSON(200, gin.H{"data": result, "status": 1})
+		return c
 	}
-	return c
 }

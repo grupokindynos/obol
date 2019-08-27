@@ -41,7 +41,7 @@ func ApplyRoutes(r *gin.Engine) {
 		api.Use(limit.NewRateLimiter(func(c *gin.Context) string {
 			return c.ClientIP()
 		}, func(c *gin.Context) (*rate.Limiter, time.Duration) {
-			return rate.NewLimiter(rate.Every(100*time.Hour), 10), time.Hour
+			return rate.NewLimiter(rate.Every(100*time.Hour), 100), time.Hour
 		}, func(c *gin.Context) {
 			c.AbortWithStatus(429)
 		}))

@@ -57,10 +57,18 @@ func TestRateSevice_GetCoinToCoinRatesWithAmount(t *testing.T) {
 	assert.NotZero(t, rate)
 }
 
-func TestRateSevice_GetCoinToCoinRatesBTC(t *testing.T) {
+func TestRateSevice_GetCoinToCoinRatesBTCFirst(t *testing.T) {
 	polis, _ := coinfactory.GetCoin("polis")
 	btc, _ := coinfactory.GetCoin("btc")
 	rate, err := rateService.GetCoinToCoinRates(btc, polis)
+	assert.Nil(t, err)
+	assert.NotZero(t, rate)
+}
+
+func TestRateSevice_GetCoinToCoinRatesBTCSecond(t *testing.T) {
+	polis, _ := coinfactory.GetCoin("polis")
+	btc, _ := coinfactory.GetCoin("btc")
+	rate, err := rateService.GetCoinToCoinRates(polis, btc)
 	assert.Nil(t, err)
 	assert.NotZero(t, rate)
 }

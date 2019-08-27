@@ -2,7 +2,7 @@ package stex
 
 import (
 	"encoding/json"
-	"errors"
+	"github.com/grupokindynos/obol/config"
 	"github.com/grupokindynos/obol/models"
 	"github.com/grupokindynos/obol/models/exchanges"
 	"io/ioutil"
@@ -23,7 +23,7 @@ func (s Service) CoinRate(coin string) (rate float64, err error) {
 	// First get the ID
 	value, exist := s.TickerID[strings.ToUpper(coin)]
 	if !exist {
-		return rate, errors.New("unknown id for coin" + coin)
+		return rate, config.ErrorUnknownIdForCoin
 	}
 	res, err := http.Get(s.BaseRateURL + value)
 	if err != nil {
@@ -50,7 +50,7 @@ func (s *Service) CoinMarketOrders(coin string) (orders []models.MarketOrder, er
 	// First get the ID
 	value, exist := s.TickerID[strings.ToUpper(coin)]
 	if !exist {
-		return orders, errors.New("unknown id for coin" + coin)
+		return orders, config.ErrorUnknownIdForCoin
 	}
 	res, err := http.Get(s.MarketRateURL + value)
 	if err != nil {

@@ -43,7 +43,7 @@ func TestGlobalResponseSuccessFloatTrunk(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	c, _ := gin.CreateTestContext(resp)
 	mockData := 1.123456789101112131415
-	trunkMockData := math.Floor(mockData * 1e8) / 1e8
+	trunkMockData := math.Floor(mockData*1e8) / 1e8
 	_ = GlobalResponse(mockData, nil, c)
 	var response map[string]interface{}
 	err := json.Unmarshal(resp.Body.Bytes(), &response)

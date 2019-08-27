@@ -77,7 +77,7 @@ func (rs *RateSevice) GetCoinToCoinRates(coinFrom *coinfactory.Coin, coinTo *coi
 	coinToRates, err := rs.GetCoinRates(coinTo)
 	coinFromCommonRate := coinFromRates["BTC"]
 	coinToCommonRate := coinToRates["BTC"]
-	return coinToCommonRate/coinFromCommonRate, err
+	return coinToCommonRate / coinFromCommonRate, err
 }
 
 func (rs *RateSevice) GetCoinToCoinRatesWithAmount(coinFrom *coinfactory.Coin, coinTo *coinfactory.Coin, amount float64) (rate float64, err error) {
@@ -113,7 +113,7 @@ func (rs *RateSevice) GetCoinToCoinRatesWithAmount(coinFrom *coinfactory.Coin, c
 		}
 	}
 	priceTrunk := math.Floor(pricesSum*1e8) / 1e8
-	finaleRate := coinToBTCRate/priceTrunk
+	finaleRate := coinToBTCRate / priceTrunk
 	return finaleRate, err
 }
 

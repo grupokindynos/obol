@@ -57,6 +57,22 @@ func TestRateSevice_GetCoinToCoinRatesWithAmount(t *testing.T) {
 	assert.NotZero(t, rate)
 }
 
+func TestRateSevice_GetCoinToCoinRatesBTCFirst(t *testing.T) {
+	polis, _ := coinfactory.GetCoin("polis")
+	btc, _ := coinfactory.GetCoin("btc")
+	rate, err := rateService.GetCoinToCoinRates(btc, polis)
+	assert.Nil(t, err)
+	assert.NotZero(t, rate)
+}
+
+func TestRateSevice_GetCoinToCoinRatesBTCSecond(t *testing.T) {
+	polis, _ := coinfactory.GetCoin("polis")
+	btc, _ := coinfactory.GetCoin("btc")
+	rate, err := rateService.GetCoinToCoinRates(polis, btc)
+	assert.Nil(t, err)
+	assert.NotZero(t, rate)
+}
+
 func TestRateSevice_GetCoinToCoinRates(t *testing.T) {
 	polis, _ := coinfactory.GetCoin("polis")
 	dash, _ := coinfactory.GetCoin("dash")
@@ -83,14 +99,6 @@ func TestRateSevice_GetCoinToCoinRatesWithAmountBTC(t *testing.T) {
 	polis, _ := coinfactory.GetCoin("polis")
 	btc, _ := coinfactory.GetCoin("btc")
 	rate, err := rateService.GetCoinToCoinRatesWithAmount(btc, polis, 100)
-	assert.Zero(t, rate)
-	assert.Equal(t, config.ErrorNoC2CWithBTC, err)
-}
-
-func TestRateSevice_GetCoinToCoinRatesBTC(t *testing.T) {
-	polis, _ := coinfactory.GetCoin("polis")
-	btc, _ := coinfactory.GetCoin("btc")
-	rate, err := rateService.GetCoinToCoinRates(btc, polis)
 	assert.Zero(t, rate)
 	assert.Equal(t, config.ErrorNoC2CWithBTC, err)
 }

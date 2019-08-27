@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"github.com/grupokindynos/obol/config"
 	"github.com/grupokindynos/obol/models/coin-factory"
 	"github.com/stretchr/testify/assert"
 	"net/http"
@@ -35,6 +36,40 @@ func TestSimpleRates(t *testing.T) {
 		err = json.Unmarshal(ratesBytes, &ratesMap)
 		assert.Nil(t, err)
 		assert.NotZero(t, ratesMap["BTC"])
+	}
+}
+
+func TestComplexRates(t *testing.T) {
+	Coins := coinfactory.CoinFactory
+	App := GetApp()
+	for _, coin := range Coins {
+		w := performRequest(App, "GET", "/complex/POLIS/"+coin.Tag)
+		var firstResponse map[string]interface{}
+		err := json.Unmarshal(w.Body.Bytes(), &firstResponse)
+		if coin.Tag == "POLIS" {
+			assert.Equal(t, http.StatusInternalServerError, w.Code)
+			assert.Equal(t, config.ErrorNoC2CWithSameCoin.Error(), firstResponse["error"])
+			continue
+		}
+		assert.Equal(t, http.StatusOK, w.Code)
+		assert.Nil(t, err)
+		firstValue, firstExist := firstResponse["status"]
+		assert.True(t, firstExist)
+		assert.Equal(t, float64(1), firstValue)
+		firstResData := firstResponse["data"]
+		assert.NotZero(t, firstResData)
+
+		w2 := performRequest(App, "GET", "/complex/POLIS/"+coin.Tag+"?amount=1")
+		assert.Equal(t, http.StatusOK, w2.Code)
+		var secondResponse map[string]interface{}
+		err = json.Unmarshal(w2.Body.Bytes(), &secondResponse)
+		assert.Nil(t, err)
+		secondValue, secondExist := firstResponse["status"]
+		assert.True(t, secondExist)
+		assert.Equal(t, float64(1), secondValue)
+		secondResData := secondResponse["data"]
+		assert.NotZero(t, secondResData)
+		assert.Equal(t, firstResData, secondResData)
 	}
 }
 

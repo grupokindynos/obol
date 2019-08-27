@@ -73,6 +73,51 @@ func TestRateController_GetCoinRates(t *testing.T) {
 	assert.NotNil(t, response["data"])
 }
 
+func TestRateController_GetCoinRatesError(t *testing.T) {
+	rateCtrl := loadRateCtrl()
+	resp := httptest.NewRecorder()
+	gin.SetMode(gin.TestMode)
+	c, _ := gin.CreateTestContext(resp)
+	c.Params = gin.Params{gin.Param{Key: "coin", Value: "non-existing-coin"}}
+	rateCtrl.GetCoinRates(c)
+	var response map[string]interface{}
+	err := json.Unmarshal(resp.Body.Bytes(), &response)
+	assert.Nil(t, err)
+	assert.Nil(t, response["data"])
+	assert.Equal(t, float64(-1), response["status"])
+	assert.Equal(t, config.ErrorCoinNotAvailable.Error(), response["error"])
+}
+
+func TestRateController_GetCoinRatesFromCoinToCoinErrorFirstCoinInvalid(t *testing.T) {
+	rateCtrl := loadRateCtrl()
+	resp := httptest.NewRecorder()
+	gin.SetMode(gin.TestMode)
+	c, _ := gin.CreateTestContext(resp)
+	c.Params = gin.Params{gin.Param{Key: "fromcoin", Value: "non-existing-coin"}, gin.Param{Key: "tocoin", Value: "polis"}}
+	rateCtrl.GetCoinRates(c)
+	var response map[string]interface{}
+	err := json.Unmarshal(resp.Body.Bytes(), &response)
+	assert.Nil(t, err)
+	assert.Nil(t, response["data"])
+	assert.Equal(t, float64(-1), response["status"])
+	assert.Equal(t, config.ErrorCoinNotAvailable.Error(), response["error"])
+}
+
+func TestRateController_GetCoinRatesFromCoinToCoinErrorSecondCoinInvalid(t *testing.T) {
+	rateCtrl := loadRateCtrl()
+	resp := httptest.NewRecorder()
+	gin.SetMode(gin.TestMode)
+	c, _ := gin.CreateTestContext(resp)
+	c.Params = gin.Params{gin.Param{Key: "fromcoin", Value: "polis"}, gin.Param{Key: "tocoin", Value: "non-existing-coin"}}
+	rateCtrl.GetCoinRates(c)
+	var response map[string]interface{}
+	err := json.Unmarshal(resp.Body.Bytes(), &response)
+	assert.Nil(t, err)
+	assert.Nil(t, response["data"])
+	assert.Equal(t, float64(-1), response["status"])
+	assert.Equal(t, config.ErrorCoinNotAvailable.Error(), response["error"])
+}
+
 func loadRateCtrl() *RateController {
 	rc := RateController{RateService: services.InitRateService()}
 	return &rc

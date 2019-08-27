@@ -20,7 +20,7 @@ type Rate struct {
 	Rate float64 `json:"rate"`
 }
 
-// OpenRate is the structure of the OpenRate response
+// OpenRates is the structure of the OpenRate response
 type OpenRates struct {
 	Rates struct {
 		CAD float64 `json:"CAD"`

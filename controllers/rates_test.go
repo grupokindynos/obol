@@ -94,7 +94,7 @@ func TestRateController_GetCoinRatesFromCoinToCoinErrorFirstCoinInvalid(t *testi
 	gin.SetMode(gin.TestMode)
 	c, _ := gin.CreateTestContext(resp)
 	c.Params = gin.Params{gin.Param{Key: "fromcoin", Value: "non-existing-coin"}, gin.Param{Key: "tocoin", Value: "polis"}}
-	rateCtrl.GetCoinRates(c)
+	rateCtrl.GetCoinRateFromCoinToCoin(c)
 	var response map[string]interface{}
 	err := json.Unmarshal(resp.Body.Bytes(), &response)
 	assert.Nil(t, err)
@@ -109,7 +109,7 @@ func TestRateController_GetCoinRatesFromCoinToCoinErrorSecondCoinInvalid(t *test
 	gin.SetMode(gin.TestMode)
 	c, _ := gin.CreateTestContext(resp)
 	c.Params = gin.Params{gin.Param{Key: "fromcoin", Value: "polis"}, gin.Param{Key: "tocoin", Value: "non-existing-coin"}}
-	rateCtrl.GetCoinRates(c)
+	rateCtrl.GetCoinRateFromCoinToCoin(c)
 	var response map[string]interface{}
 	err := json.Unmarshal(resp.Body.Bytes(), &response)
 	assert.Nil(t, err)

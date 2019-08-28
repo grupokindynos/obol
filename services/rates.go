@@ -49,13 +49,16 @@ func (rs *RateSevice) GetCoinRates(coin *coinfactory.Coin) (rates map[string]flo
 		}
 		return btcRatesMap, nil
 	}
-	rate, err := rs.GetCoinExchangeRate(coin)
+	ratesWall, err := rs.GetCoinOrdersWall(coin)
+	if err  != nil {
+		return rates, err
+	}
 	newRates := make(map[string]float64)
 	for code, singleRate := range btcRates {
 		if code == "BTC" {
-			newRates[code] = math.Floor((rate*singleRate)*1e8) / 1e8
+			newRates[code] = math.Floor((ratesWall[0].Price*singleRate)*1e8) / 1e8
 		} else {
-			newRates[code] = math.Floor((rate*singleRate)*10000) / 10000
+			newRates[code] = math.Floor((ratesWall[0].Price*singleRate)*10000) / 10000
 		}
 	}
 	return newRates, err
@@ -115,27 +118,6 @@ func (rs *RateSevice) GetCoinToCoinRatesWithAmount(coinFrom *coinfactory.Coin, c
 	priceTrunk := math.Floor(pricesSum*1e8) / 1e8
 	finaleRate := coinToBTCRate / priceTrunk
 	return finaleRate, err
-}
-
-func (rs *RateSevice) GetCoinExchangeRate(coin *coinfactory.Coin) (float64, error) {
-	var service Exchange
-	switch coin.Exchange {
-	case "binance":
-		service = rs.BinanceService
-	case "bittrex":
-		service = rs.BittrexService
-	case "cryptobridge":
-		service = rs.CryptoBridgeService
-	case "crex24":
-		service = rs.Crex24Service
-	case "stex":
-		service = rs.StexService
-	}
-	if service != nil {
-		rate, err := service.CoinRate(coin.Tag)
-		return rate, err
-	}
-	return 0, config.ErrorNoServiceForCoin
 }
 
 func (rs *RateSevice) GetCoinOrdersWall(coin *coinfactory.Coin) (orders []models.MarketOrder, err error) {

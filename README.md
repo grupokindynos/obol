@@ -28,7 +28,7 @@ git clone https://github.com/grupokindynos/obol && cd obol
 Install dependencies
 
 ```
-go mod tidy
+go mod download
 ```
 
 Build it or Run it:

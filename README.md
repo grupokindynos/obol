@@ -7,14 +7,28 @@
 
 > The obol was a form of ancient Greek currency and weight
 
+[![Deploy](https://www.herokucdn.com/deploy/button.svg)](https://heroku.com/deploy)
+
 Obol is a microservice API for multiple cryptocurrency rates.
 
 ## Building
 
+To run Obol from the source code, first you need to install golang, follow this guide:
+
+```
+https://golang.org/doc/install
+```
+
 To run Obol simply clone de repository:
 
 ```
-git clone https://github.com/grupokindynos/obol
+git clone https://github.com/grupokindynos/obol && cd obol
+```
+
+Install dependencies
+
+```
+go mod tidy
 ```
 
 Build it or Run it:

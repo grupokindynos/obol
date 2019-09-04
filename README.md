@@ -161,7 +161,7 @@ go test ./...
 
 ## Contributing
 
-Pull Requests accepted.
+To contribute to this repository, please fork it, create a new branch and submit a pull request.
 
 To add a new coin, please add a new coin configuration under `models/coin-factory/coins.go`
 

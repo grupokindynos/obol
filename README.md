@@ -7,9 +7,24 @@
 
 > The obol was a form of ancient Greek currency and weight
 
+Obol is a microservice API for multiple cryptocurrency rates.
+
+## Deploy
+
+#### Heroku
+
 [![Deploy](https://www.herokucdn.com/deploy/button.svg)](https://heroku.com/deploy?template=https://github.com/grupokindynos/obol/blob/master/)
 
-Obol is a microservice API for multiple cryptocurrency rates.
+#### Docker
+
+To deploy to docker, simply pull the image
+```
+docker pull kindynos/obol:latest
+```
+Run the docker image
+```
+docker run -p 8080:8080 kindynos/plutus:latest 
+```
 
 ## Building
 

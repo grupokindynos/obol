@@ -6,7 +6,6 @@ import (
 	"github.com/grupokindynos/obol/models"
 	"github.com/grupokindynos/obol/models/exchanges"
 	"io/ioutil"
-	"net/http"
 	"strconv"
 	"strings"
 )
@@ -26,9 +25,9 @@ func (s Service) CoinRate(coin string) (rate float64, err error) {
 	if !exist {
 		return rate, config.ErrorUnknownIdForCoin
 	}
-	res, err := http.Get(s.BaseRateURL + value)
+	res, err := config.HttpClient.Get(s.BaseRateURL + value)
 	if err != nil {
-		return rate, err
+		return rate, config.ErrorRequestTimeout
 	}
 	defer func() {
 		_ = res.Body.Close()
@@ -52,9 +51,9 @@ func (s *Service) CoinMarketOrders(coin string) (orders []models.MarketOrder, er
 	if !exist {
 		return orders, config.ErrorUnknownIdForCoin
 	}
-	res, err := http.Get(s.MarketRateURL + value)
+	res, err := config.HttpClient.Get(s.MarketRateURL + value)
 	if err != nil {
-		return orders, err
+		return orders, config.ErrorRequestTimeout
 	}
 	defer func() {
 		_ = res.Body.Close()

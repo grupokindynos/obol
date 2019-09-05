@@ -144,7 +144,7 @@ func (rs *RateSevice) GetCoinOrdersWall(coin *coinfactory.Coin) (orders []models
 func (rs *RateSevice) GetBtcMxnRate() (float64, error) {
 	res, err := config.HttpClient.Get("https://api.bitso.com/v3/ticker/?book=btc_mxn")
 	if err != nil {
-		return 0, err
+		return 0, config.ErrorRequestTimeout
 	}
 	defer func() {
 		_ = res.Body.Close()

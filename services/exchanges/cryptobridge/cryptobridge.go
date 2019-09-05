@@ -2,10 +2,10 @@ package cryptobridge
 
 import (
 	"encoding/json"
+	"github.com/grupokindynos/obol/config"
 	"github.com/grupokindynos/obol/models"
 	"github.com/grupokindynos/obol/models/exchanges"
 	"io/ioutil"
-	"net/http"
 	"strconv"
 	"strings"
 )
@@ -17,9 +17,9 @@ type Service struct {
 }
 
 func (s Service) CoinRate(coin string) (rate float64, err error) {
-	res, err := http.Get(s.BaseRateURL + strings.ToUpper(coin) + "_BTC")
+	res, err := config.HttpClient.Get(s.BaseRateURL + strings.ToUpper(coin) + "_BTC")
 	if err != nil {
-		return rate, err
+		return rate, config.ErrorRequestTimeout
 	}
 	defer func() {
 		_ = res.Body.Close()
@@ -33,9 +33,9 @@ func (s Service) CoinRate(coin string) (rate float64, err error) {
 
 // CoinMarketOrders is used to get the market sell and buy wall from a coin
 func (s *Service) CoinMarketOrders(coin string) (orders []models.MarketOrder, err error) {
-	res, err := http.Get(s.MarketRateURL + strings.ToUpper(coin) + "_BTC")
+	res, err := config.HttpClient.Get(s.MarketRateURL + strings.ToUpper(coin) + "_BTC")
 	if err != nil {
-		return orders, err
+		return orders, config.ErrorRequestTimeout
 	}
 	defer func() {
 		_ = res.Body.Close()

@@ -16,8 +16,9 @@ var (
 	ErrorNoC2CWithSameCoin  = errors.New("cannot use the same coin on both parameters")
 	ErrorInvalidAmountOnC2C = errors.New("invalid amount to convert from coin to coin")
 	ErrorUnknownIdForCoin   = errors.New("unknown id for coin")
+	ErrorRequestTimeout     = errors.New("request timeout")
 	HttpClient              = &http.Client{
-		Timeout: time.Second * 10,
+		Timeout: time.Second * 5,
 	}
 )
 

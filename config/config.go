@@ -18,7 +18,7 @@ var (
 	ErrorUnknownIdForCoin   = errors.New("unknown id for coin")
 	ErrorRequestTimeout     = errors.New("request timeout")
 	HttpClient              = &http.Client{
-		Timeout: time.Second * 5,
+		Timeout: time.Second * 1,
 	}
 )
 

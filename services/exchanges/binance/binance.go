@@ -12,24 +12,7 @@ import (
 
 // Service is a common structure for a exchange
 type Service struct {
-	BaseRateURL   string
 	MarketRateURL string
-}
-
-// CoinRate is used to get the rate on BTC from a coin
-func (s *Service) CoinRate(coin string) (rate float64, err error) {
-	res, err := config.HttpClient.Get(s.BaseRateURL + strings.ToUpper(coin) + "BTC")
-	if err != nil {
-		return rate, config.ErrorRequestTimeout
-	}
-	defer func() {
-		_ = res.Body.Close()
-	}()
-	contents, _ := ioutil.ReadAll(res.Body)
-	var Response exchanges.BinanceRate
-	_ = json.Unmarshal(contents, &Response)
-	rate, err = strconv.ParseFloat(Response.LastPrice, 64)
-	return rate, err
 }
 
 // CoinMarketOrders is used to get the market sell and buy wall from a coin
@@ -59,7 +42,6 @@ func (s *Service) CoinMarketOrders(coin string) (orders []models.MarketOrder, er
 // InitService is used to safely start a new service reference.
 func InitService() *Service {
 	s := &Service{
-		BaseRateURL:   "https://api.binance.com/api/v1/ticker/24hr?symbol=",
 		MarketRateURL: "https://api.binance.com/api/v1/depth?symbol=",
 	}
 	return s

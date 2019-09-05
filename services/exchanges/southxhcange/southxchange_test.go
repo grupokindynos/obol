@@ -1,4 +1,4 @@
-package crex24
+package southxhcange
 
 import (
 	"github.com/stretchr/testify/assert"
@@ -8,7 +8,7 @@ import (
 var service = InitService()
 
 func TestService_CoinMarketOrders(t *testing.T) {
-	orders, err := service.CoinMarketOrders("mnp")
+	orders, err := service.CoinMarketOrders("polis")
 	assert.Nil(t, err)
 	assert.NotNil(t, orders)
 	assert.NotZero(t, len(orders))

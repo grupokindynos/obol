@@ -7,61 +7,72 @@ import (
 
 // Coin is the basic coin structure to get the correct properties for each coin.
 type Coin struct {
-	Tag      string
-	Name     string
-	Exchange string
+	Tag              string
+	Name             string
+	Exchange         string
+	FallBackExchange string
 }
 
 var (
 	bitcoin = Coin{
-		Tag:      "BTC",
-		Name:     "bitcoin",
-		Exchange: "bitso",
+		Tag:              "BTC",
+		Name:             "bitcoin",
+		Exchange:         "bitso",
+		FallBackExchange: "",
 	}
 	colossus = Coin{
-		Tag:      "COLX",
-		Name:     "colossus",
-		Exchange: "cryptobridge",
+		Tag:              "COLX",
+		Name:             "colossus",
+		Exchange:         "cryptobridge",
+		FallBackExchange: "",
 	}
 	dash = Coin{
-		Tag:      "DASH",
-		Name:     "dash",
-		Exchange: "binance",
+		Tag:              "DASH",
+		Name:             "dash",
+		Exchange:         "binance",
+		FallBackExchange: "bittrex",
 	}
 	digibyte = Coin{
-		Tag:      "DGB",
-		Name:     "digibyte",
-		Exchange: "bittrex",
+		Tag:              "DGB",
+		Name:             "digibyte",
+		Exchange:         "bittrex",
+		FallBackExchange: "",
 	}
 	groestlcoin = Coin{
-		Tag:      "GRS",
-		Name:     "groestlcoin",
-		Exchange: "binance",
+		Tag:              "GRS",
+		Name:             "groestlcoin",
+		Exchange:         "binance",
+		FallBackExchange: "bittrex",
 	}
 	litecoin = Coin{
-		Tag:      "LTC",
-		Name:     "litecoin",
-		Exchange: "binance",
+		Tag:              "LTC",
+		Name:             "litecoin",
+		Exchange:         "binance",
+		FallBackExchange: "bittrex",
 	}
 	mnpcoin = Coin{
-		Tag:      "MNP",
-		Name:     "mnpcoin",
-		Exchange: "crex24",
+		Tag:              "MNP",
+		Name:             "mnpcoin",
+		Exchange:         "crex24",
+		FallBackExchange: "stex",
 	}
 	polis = Coin{
-		Tag:      "POLIS",
-		Name:     "polis",
-		Exchange: "cryptobridge",
+		Tag:              "POLIS",
+		Name:             "polis",
+		Exchange:         "cryptobridge",
+		FallBackExchange: "southxchange",
 	}
 	snowgem = Coin{
-		Tag:      "XSG",
-		Name:     "snowgem",
-		Exchange: "stex",
+		Tag:              "XSG",
+		Name:             "snowgem",
+		Exchange:         "stex",
+		FallBackExchange: "cryptobridge",
 	}
 	zcoin = Coin{
-		Tag:      "XZC",
-		Name:     "zcoin",
-		Exchange: "binance",
+		Tag:              "XZC",
+		Name:             "zcoin",
+		Exchange:         "binance",
+		FallBackExchange: "bittrex",
 	}
 )
 

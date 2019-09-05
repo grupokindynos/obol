@@ -11,6 +11,7 @@ import (
 	"github.com/grupokindynos/obol/services/exchanges/bittrex"
 	"github.com/grupokindynos/obol/services/exchanges/crex24"
 	"github.com/grupokindynos/obol/services/exchanges/cryptobridge"
+	"github.com/grupokindynos/obol/services/exchanges/southxhcange"
 	"github.com/grupokindynos/obol/services/exchanges/stex"
 	"io/ioutil"
 	"math"
@@ -22,7 +23,6 @@ const UpdateFiatRatesTimeFrame = 60 * 60 // 1 Hour timeframe
 
 //Exchange is the interface to make sure all exchange services have the same properties
 type Exchange interface {
-	CoinRate(coin string) (rate float64, err error)
 	CoinMarketOrders(coin string) (orders []models.MarketOrder, err error)
 }
 
@@ -35,6 +35,7 @@ type RateSevice struct {
 	CryptoBridgeService *cryptobridge.Service
 	Crex24Service       *crex24.Service
 	StexService         *stex.Service
+	SouthXChangeService *southxhcange.Service
 }
 
 func (rs *RateSevice) GetCoinRates(coin *coinfactory.Coin) (rates map[string]float64, err error) {
@@ -50,7 +51,7 @@ func (rs *RateSevice) GetCoinRates(coin *coinfactory.Coin) (rates map[string]flo
 		return btcRatesMap, nil
 	}
 	ratesWall, err := rs.GetCoinOrdersWall(coin)
-	if err  != nil {
+	if err != nil {
 		return rates, err
 	}
 	newRates := make(map[string]float64)
@@ -133,9 +134,32 @@ func (rs *RateSevice) GetCoinOrdersWall(coin *coinfactory.Coin) (orders []models
 		service = rs.Crex24Service
 	case "stex":
 		service = rs.StexService
+	case "southxchange":
+		service = rs.SouthXChangeService
 	}
 	if service != nil {
 		orders, err = service.CoinMarketOrders(coin.Tag)
+		if err != nil {
+			var fallBackService Exchange
+			switch coin.FallBackExchange {
+			case "binance":
+				fallBackService = rs.BinanceService
+			case "bittrex":
+				fallBackService = rs.BittrexService
+			case "cryptobridge":
+				fallBackService = rs.CryptoBridgeService
+			case "crex24":
+				fallBackService = rs.Crex24Service
+			case "stex":
+				fallBackService = rs.StexService
+			case "southxchange":
+				fallBackService = rs.SouthXChangeService
+			}
+			if fallBackService != nil {
+				fallBackOrders, err := fallBackService.CoinMarketOrders(coin.Tag)
+				return fallBackOrders, err
+			}
+		}
 		return orders, err
 	}
 	return orders, config.ErrorNoServiceForCoin
@@ -199,6 +223,7 @@ func InitRateService() *RateSevice {
 		CryptoBridgeService: cryptobridge.InitService(),
 		Crex24Service:       crex24.InitService(),
 		StexService:         stex.InitService(),
+		SouthXChangeService: southxhcange.InitService(),
 	}
 	return rs
 }

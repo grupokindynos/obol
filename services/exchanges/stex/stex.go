@@ -17,31 +17,6 @@ type Service struct {
 	TickerID      map[string]string
 }
 
-func (s Service) CoinRate(coin string) (rate float64, err error) {
-	// Instead of using the ticker, this one uses an ID
-	// A map is created on the Init Service with known coins and ticker ID for this exchange.
-	// First get the ID
-	value, exist := s.TickerID[strings.ToUpper(coin)]
-	if !exist {
-		return rate, config.ErrorUnknownIdForCoin
-	}
-	res, err := config.HttpClient.Get(s.BaseRateURL + value)
-	if err != nil {
-		return rate, config.ErrorRequestTimeout
-	}
-	defer func() {
-		_ = res.Body.Close()
-	}()
-	contents, err := ioutil.ReadAll(res.Body)
-	var Response exchanges.StexRate
-	err = json.Unmarshal(contents, &Response)
-	if err != nil {
-		return rate, err
-	}
-	rate, err = strconv.ParseFloat(Response.Data.Last, 64)
-	return rate, err
-}
-
 // CoinMarketOrders is used to get the market sell and buy wall from a coin
 func (s *Service) CoinMarketOrders(coin string) (orders []models.MarketOrder, err error) {
 	// Instead of using the ticker, this one uses an ID

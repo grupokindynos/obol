@@ -24,7 +24,7 @@ var (
 		Tag:              "COLX",
 		Name:             "colossus",
 		Exchange:         "cryptobridge",
-		FallBackExchange: "",
+		FallBackExchange: "novaexchange",
 	}
 	dash = Coin{
 		Tag:              "DASH",

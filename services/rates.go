@@ -11,6 +11,7 @@ import (
 	"github.com/grupokindynos/obol/services/exchanges/bittrex"
 	"github.com/grupokindynos/obol/services/exchanges/crex24"
 	"github.com/grupokindynos/obol/services/exchanges/cryptobridge"
+	"github.com/grupokindynos/obol/services/exchanges/novaexchange"
 	"github.com/grupokindynos/obol/services/exchanges/southxhcange"
 	"github.com/grupokindynos/obol/services/exchanges/stex"
 	"io/ioutil"
@@ -36,6 +37,7 @@ type RateSevice struct {
 	Crex24Service       *crex24.Service
 	StexService         *stex.Service
 	SouthXChangeService *southxhcange.Service
+	NovaExchangeService *novaexchange.Service
 }
 
 func (rs *RateSevice) GetCoinRates(coin *coinfactory.Coin) (rates map[string]float64, err error) {
@@ -132,6 +134,8 @@ func (rs *RateSevice) GetCoinOrdersWall(coin *coinfactory.Coin) (orders []models
 		service = rs.CryptoBridgeService
 	case "crex24":
 		service = rs.Crex24Service
+	case "novaexchange":
+		service = rs.NovaExchangeService
 	case "stex":
 		service = rs.StexService
 	case "southxchange":
@@ -150,6 +154,8 @@ func (rs *RateSevice) GetCoinOrdersWall(coin *coinfactory.Coin) (orders []models
 				fallBackService = rs.CryptoBridgeService
 			case "crex24":
 				fallBackService = rs.Crex24Service
+			case "novaexchange":
+				fallBackService = rs.NovaExchangeService
 			case "stex":
 				fallBackService = rs.StexService
 			case "southxchange":
@@ -224,6 +230,7 @@ func InitRateService() *RateSevice {
 		Crex24Service:       crex24.InitService(),
 		StexService:         stex.InitService(),
 		SouthXChangeService: southxhcange.InitService(),
+		NovaExchangeService: novaexchange.InitService(),
 	}
 	return rs
 }

@@ -20,6 +20,7 @@ import (
 	"time"
 )
 
+// UpdateFiatRatesTimeFrame is the time frame to update fiat rates
 const UpdateFiatRatesTimeFrame = 60 * 60 // 1 Hour timeframe
 
 //Exchange is the interface to make sure all exchange services have the same properties
@@ -27,8 +28,10 @@ type Exchange interface {
 	CoinMarketOrders(coin string) (orders map[string][]models.MarketOrder, err error)
 }
 
+// FiatRates is the model of the OpenRates fiat rates information
 var FiatRates *models.FiatRates
 
+// RateSevice is the main wrapper for all different exchanges and fiat rates data
 type RateSevice struct {
 	FiatRates           *models.FiatRates
 	BittrexService      *bittrex.Service
@@ -40,6 +43,7 @@ type RateSevice struct {
 	NovaExchangeService *novaexchange.Service
 }
 
+// GetCoinRates is the main function to get the rates of a coin using the OpenRates structure
 func (rs *RateSevice) GetCoinRates(coin *coinfactory.Coin) (rates map[string]float64, err error) {
 	btcRates, err := rs.GetBtcRates()
 	if err != nil {
@@ -67,6 +71,7 @@ func (rs *RateSevice) GetCoinRates(coin *coinfactory.Coin) (rates map[string]flo
 	return newRates, err
 }
 
+// GetCoinToCoinRates will return the rates from a crypto to a crypto using the exchanges data
 func (rs *RateSevice) GetCoinToCoinRates(coinFrom *coinfactory.Coin, coinTo *coinfactory.Coin) (rate float64, err error) {
 	if coinFrom.Tag == "BTC" {
 		coinRates, err := rs.GetCoinRates(coinTo)
@@ -86,6 +91,7 @@ func (rs *RateSevice) GetCoinToCoinRates(coinFrom *coinfactory.Coin, coinTo *coi
 	return coinToCommonRate / coinFromCommonRate, err
 }
 
+// GetCoinToCoinRatesWithAmount is used to get the rates from crypto to crypto using a specified amount to convert
 func (rs *RateSevice) GetCoinToCoinRatesWithAmount(coinFrom *coinfactory.Coin, coinTo *coinfactory.Coin, amount float64) (rate float64, err error) {
 	if coinFrom.Tag == coinTo.Tag {
 		return rate, config.ErrorNoC2CWithSameCoin
@@ -137,6 +143,7 @@ func (rs *RateSevice) GetCoinToCoinRatesWithAmount(coinFrom *coinfactory.Coin, c
 	return finaleRate, err
 }
 
+// GetCoinOrdersWall will return the buy/sell orders from selected or fallback exchange
 func (rs *RateSevice) GetCoinOrdersWall(coin *coinfactory.Coin) (orders map[string][]models.MarketOrder, err error) {
 	var service Exchange
 	switch coin.Exchange {
@@ -155,36 +162,38 @@ func (rs *RateSevice) GetCoinOrdersWall(coin *coinfactory.Coin) (orders map[stri
 	case "southxchange":
 		service = rs.SouthXChangeService
 	}
-	if service != nil {
-		orders, err = service.CoinMarketOrders(coin.Tag)
-		if err != nil {
-			var fallBackService Exchange
-			switch coin.FallBackExchange {
-			case "binance":
-				fallBackService = rs.BinanceService
-			case "bittrex":
-				fallBackService = rs.BittrexService
-			case "cryptobridge":
-				fallBackService = rs.CryptoBridgeService
-			case "crex24":
-				fallBackService = rs.Crex24Service
-			case "novaexchange":
-				fallBackService = rs.NovaExchangeService
-			case "stex":
-				fallBackService = rs.StexService
-			case "southxchange":
-				fallBackService = rs.SouthXChangeService
-			}
-			if fallBackService != nil {
-				fallBackOrders, err := fallBackService.CoinMarketOrders(coin.Tag)
-				return fallBackOrders, err
-			}
-		}
-		return orders, err
+	if service == nil {
+		return nil, config.ErrorNoServiceForCoin
 	}
-	return orders, config.ErrorNoServiceForCoin
+	orders, err = service.CoinMarketOrders(coin.Tag)
+	if err != nil {
+		var fallBackService Exchange
+		switch coin.FallBackExchange {
+		case "binance":
+			fallBackService = rs.BinanceService
+		case "bittrex":
+			fallBackService = rs.BittrexService
+		case "cryptobridge":
+			fallBackService = rs.CryptoBridgeService
+		case "crex24":
+			fallBackService = rs.Crex24Service
+		case "novaexchange":
+			fallBackService = rs.NovaExchangeService
+		case "stex":
+			fallBackService = rs.StexService
+		case "southxchange":
+			fallBackService = rs.SouthXChangeService
+		}
+		if fallBackService == nil {
+			return nil, config.ErrorNoFallBackServiceForCoin
+		}
+		fallBackOrders, err := fallBackService.CoinMarketOrders(coin.Tag)
+		return fallBackOrders, err
+	}
+	return orders, err
 }
 
+// GetBtcMxnRate will return the price of BTC on MXN
 func (rs *RateSevice) GetBtcMxnRate() (float64, error) {
 	res, err := config.HttpClient.Get("https://api.bitso.com/v3/ticker/?book=btc_mxn")
 	if err != nil {
@@ -196,10 +205,14 @@ func (rs *RateSevice) GetBtcMxnRate() (float64, error) {
 	contents, _ := ioutil.ReadAll(res.Body)
 	var bitsoRates exchanges.BitsoRates
 	err = json.Unmarshal(contents, &bitsoRates)
+	if err != nil {
+		return 0, err
+	}
 	rate, err := strconv.ParseFloat(bitsoRates.Payload.Last, 64)
 	return rate, err
 }
 
+// GetBtcRates will return the Bitcoin rates using the OpenRates structure
 func (rs *RateSevice) GetBtcRates() (rates map[string]float64, err error) {
 	if rs.FiatRates.LastUpdated.Unix()+UpdateFiatRatesTimeFrame > time.Now().Unix() {
 		loadFiatRates()
@@ -234,6 +247,7 @@ func loadFiatRates() {
 	}
 }
 
+// InitRateService is a safe to use function to init the rate service.
 func InitRateService() *RateSevice {
 	loadFiatRates()
 	rs := &RateSevice{

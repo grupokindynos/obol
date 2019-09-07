@@ -9,14 +9,16 @@ import (
 )
 
 var (
-	OpenRatesURL            = "https://api.exchangeratesapi.io/latest?base=MXN"
-	ErrorCoinNotAvailable   = errors.New("coin not available")
-	ErrorNoServiceForCoin   = errors.New("unable to load exchange for this coin")
-	ErrorNoC2CWithSameCoin  = errors.New("cannot use the same coin on both parameters")
-	ErrorInvalidAmountOnC2C = errors.New("invalid amount to convert from coin to coin")
-	ErrorUnknownIdForCoin   = errors.New("unknown id for coin")
-	ErrorRequestTimeout     = errors.New("request timeout")
-	HttpClient              = &http.Client{
+	// OpenRatesURL is the base URL for fiat rates based on OpenRates
+	OpenRatesURL                  = "https://api.exchangeratesapi.io/latest?base=MXN"
+	ErrorCoinNotAvailable         = errors.New("coin not available")
+	ErrorNoServiceForCoin         = errors.New("unable to load exchange for this coin")
+	ErrorNoFallBackServiceForCoin = errors.New("unable to load fallback exchange for this coin")
+	ErrorNoC2CWithSameCoin        = errors.New("cannot use the same coin on both parameters")
+	ErrorInvalidAmountOnC2C       = errors.New("invalid amount to convert from coin to coin")
+	ErrorUnknownIdForCoin         = errors.New("unknown id for coin")
+	ErrorRequestTimeout           = errors.New("request timeout")
+	HttpClient                    = &http.Client{
 		Timeout: time.Second * 2,
 	}
 )

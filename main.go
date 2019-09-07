@@ -25,9 +25,13 @@ func main() {
 		port = "8080"
 	}
 	App := GetApp()
-	_ = App.Run(":" + port)
+	err := App.Run(":" + port)
+	if err != nil {
+		panic(err)
+	}
 }
 
+// GetApp is used to wrap all the additions to the GIN API.
 func GetApp() *gin.Engine {
 	App := gin.Default()
 	App.Use(cors.Default())
@@ -35,6 +39,7 @@ func GetApp() *gin.Engine {
 	return App
 }
 
+// ApplyRoutes is used to attach all the routes to the API service.
 func ApplyRoutes(r *gin.Engine) {
 	api := r.Group("/")
 	{

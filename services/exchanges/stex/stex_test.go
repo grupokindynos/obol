@@ -10,9 +10,8 @@ var service = InitService()
 
 func TestService_CoinMarketOrders(t *testing.T) {
 	orders, err := service.CoinMarketOrders("xsg")
-	// TODO handle possible error types
 	if err != nil {
-		assert.Nil(t, orders)
+		assert.Zero(t, len(orders))
 		assert.NotNil(t, err)
 	} else {
 		assert.NotNil(t, orders)
@@ -22,7 +21,7 @@ func TestService_CoinMarketOrders(t *testing.T) {
 
 func TestService_CoinMarketOrdersError(t *testing.T) {
 	rate, err := service.CoinMarketOrders("non-existing")
-	assert.Zero(t, rate)
+	assert.Zero(t, len(rate))
 	assert.Equal(t, config.ErrorUnknownIdForCoin, err)
 }
 

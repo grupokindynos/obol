@@ -49,7 +49,7 @@ func TestRateSevice_GetCoinOrdersWall(t *testing.T) {
 
 func TestRateSevice_GetCoinRates(t *testing.T) {
 	for _, coin := range coinfactory.CoinFactory {
-		rates, err := rateService.GetCoinRates(&coin)
+		rates, err := rateService.GetCoinRates(&coin, false)
 		// TODO handle possible error types
 		if err != nil {
 			assert.NotNil(t, err)
@@ -111,6 +111,6 @@ func TestNoServiceForCoin(t *testing.T) {
 	mockCoin := &coinfactory.Coin{Tag: "FaKeCOIN", Name: "FakeCoin"}
 	_, err := rateService.GetCoinOrdersWall(mockCoin)
 	assert.Equal(t, config.ErrorNoServiceForCoin, err)
-	_, err = rateService.GetCoinRates(mockCoin)
+	_, err = rateService.GetCoinRates(mockCoin, false)
 	assert.Equal(t, config.ErrorNoServiceForCoin, err)
 }

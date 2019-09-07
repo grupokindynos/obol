@@ -21,7 +21,7 @@ func (rc *RateController) GetCoinRates(c *gin.Context) {
 		config.GlobalResponse(nil, err, c)
 		return
 	}
-	rates, err := rc.RateService.GetCoinRates(coinData)
+	rates, err := rc.RateService.GetCoinRates(coinData, false)
 	config.GlobalResponse(rates, err, c)
 	return
 }

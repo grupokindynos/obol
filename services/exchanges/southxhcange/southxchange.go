@@ -29,7 +29,7 @@ func (s *Service) CoinMarketOrders(coin string) (orders map[string][]models.Mark
 	err = json.Unmarshal(contents, &Response)
 	var buyOrders []models.MarketOrder
 	var sellOrders []models.MarketOrder
-	for _, order := range Response.SellOrders {
+	for _, order := range Response.BuyOrders {
 		price := order.Price
 		amount := order.Amount
 		newOrder := models.MarketOrder{
@@ -38,7 +38,7 @@ func (s *Service) CoinMarketOrders(coin string) (orders map[string][]models.Mark
 		}
 		sellOrders = append(sellOrders, newOrder)
 	}
-	for _, order := range Response.BuyOrders {
+	for _, order := range Response.SellOrders {
 		price := order.Price
 		amount := order.Amount
 		newOrder := models.MarketOrder{

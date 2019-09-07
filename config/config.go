@@ -12,7 +12,6 @@ var (
 	OpenRatesURL            = "https://api.exchangeratesapi.io/latest?base=MXN"
 	ErrorCoinNotAvailable   = errors.New("coin not available")
 	ErrorNoServiceForCoin   = errors.New("unable to load exchange for this coin")
-	ErrorNoC2CWithBTC       = errors.New("coin to coin function doesn't work using BTC")
 	ErrorNoC2CWithSameCoin  = errors.New("cannot use the same coin on both parameters")
 	ErrorInvalidAmountOnC2C = errors.New("invalid amount to convert from coin to coin")
 	ErrorUnknownIdForCoin   = errors.New("unknown id for coin")

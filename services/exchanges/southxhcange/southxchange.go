@@ -15,7 +15,8 @@ type Service struct {
 }
 
 // CoinMarketOrders is used to get the market sell and buy wall from a coin
-func (s *Service) CoinMarketOrders(coin string) (orders []models.MarketOrder, err error) {
+func (s *Service) CoinMarketOrders(coin string) (orders map[string][]models.MarketOrder, err error) {
+	orders = make(map[string][]models.MarketOrder)
 	res, err := config.HttpClient.Get(s.MarketRateURL + strings.ToUpper(coin) + "/BTC")
 	if err != nil {
 		return orders, config.ErrorRequestTimeout
@@ -26,15 +27,28 @@ func (s *Service) CoinMarketOrders(coin string) (orders []models.MarketOrder, er
 	contents, err := ioutil.ReadAll(res.Body)
 	var Response exchanges.SouthXChangeMarkets
 	err = json.Unmarshal(contents, &Response)
-	for _, ask := range Response.BuyOrders {
-		price := ask.Price
-		amount := ask.Amount
+	var buyOrders []models.MarketOrder
+	var sellOrders []models.MarketOrder
+	for _, order := range Response.SellOrders {
+		price := order.Price
+		amount := order.Amount
 		newOrder := models.MarketOrder{
 			Price:  price,
 			Amount: amount,
 		}
-		orders = append(orders, newOrder)
+		sellOrders = append(sellOrders, newOrder)
 	}
+	for _, order := range Response.BuyOrders {
+		price := order.Price
+		amount := order.Amount
+		newOrder := models.MarketOrder{
+			Price:  price,
+			Amount: amount,
+		}
+		buyOrders = append(buyOrders, newOrder)
+	}
+	orders["buy"] = buyOrders
+	orders["sell"] = sellOrders
 	return orders, err
 }
 

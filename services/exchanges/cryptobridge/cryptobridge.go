@@ -16,7 +16,8 @@ type Service struct {
 }
 
 // CoinMarketOrders is used to get the market sell and buy wall from a coin
-func (s *Service) CoinMarketOrders(coin string) (orders []models.MarketOrder, err error) {
+func (s *Service) CoinMarketOrders(coin string) (orders map[string][]models.MarketOrder, err error) {
+	orders = make(map[string][]models.MarketOrder)
 	res, err := config.HttpClient.Get(s.MarketRateURL + strings.ToUpper(coin) + "_BTC")
 	if err != nil {
 		return orders, config.ErrorRequestTimeout
@@ -27,15 +28,28 @@ func (s *Service) CoinMarketOrders(coin string) (orders []models.MarketOrder, er
 	contents, err := ioutil.ReadAll(res.Body)
 	var Response exchanges.CryptoBridgeMarkets
 	err = json.Unmarshal(contents, &Response)
-	for _, ask := range Response.Bids {
-		price, _ := strconv.ParseFloat(ask.Price, 64)
-		amount, _ := strconv.ParseFloat(ask.Amount, 64)
+	var buyOrders []models.MarketOrder
+	var sellOrders []models.MarketOrder
+	for _, order := range Response.Bids {
+		price, _ := strconv.ParseFloat(order.Price, 64)
+		amount, _ := strconv.ParseFloat(order.Amount, 64)
 		newOrder := models.MarketOrder{
 			Price:  price,
 			Amount: amount,
 		}
-		orders = append(orders, newOrder)
+		sellOrders = append(sellOrders, newOrder)
 	}
+	for _, order := range Response.Asks {
+		price, _ := strconv.ParseFloat(order.Price, 64)
+		amount, _ := strconv.ParseFloat(order.Amount, 64)
+		newOrder := models.MarketOrder{
+			Price:  price,
+			Amount: amount,
+		}
+		buyOrders = append(buyOrders, newOrder)
+	}
+	orders["buy"] = buyOrders
+	orders["sell"] = sellOrders
 	return orders, err
 }
 

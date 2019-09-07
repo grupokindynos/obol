@@ -107,14 +107,6 @@ func TestRateSevice_GetCoinToCoinRatesSameParams(t *testing.T) {
 	assert.Equal(t, config.ErrorNoC2CWithSameCoin, err)
 }
 
-func TestRateSevice_GetCoinToCoinRatesWithAmountBTC(t *testing.T) {
-	polis, _ := coinfactory.GetCoin("polis")
-	btc, _ := coinfactory.GetCoin("btc")
-	rate, err := rateService.GetCoinToCoinRatesWithAmount(btc, polis, 100)
-	assert.Zero(t, rate)
-	assert.Equal(t, config.ErrorNoC2CWithBTC, err)
-}
-
 func TestNoServiceForCoin(t *testing.T) {
 	mockCoin := &coinfactory.Coin{Tag: "FaKeCOIN", Name: "FakeCoin"}
 	_, err := rateService.GetCoinOrdersWall(mockCoin)

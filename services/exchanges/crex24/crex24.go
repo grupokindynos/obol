@@ -15,7 +15,8 @@ type Service struct {
 }
 
 // CoinMarketOrders is used to get the market sell and buy wall from a coin
-func (s *Service) CoinMarketOrders(coin string) (orders []models.MarketOrder, err error) {
+func (s *Service) CoinMarketOrders(coin string) (orders map[string][]models.MarketOrder, err error) {
+	orders = make(map[string][]models.MarketOrder)
 	res, err := config.HttpClient.Get(s.MarketRateURL + strings.ToUpper(coin) + "-BTC")
 	if err != nil {
 		return orders, config.ErrorRequestTimeout
@@ -26,13 +27,24 @@ func (s *Service) CoinMarketOrders(coin string) (orders []models.MarketOrder, er
 	contents, err := ioutil.ReadAll(res.Body)
 	var Response exchanges.Crex24Markets
 	err = json.Unmarshal(contents, &Response)
-	for _, ask := range Response.BuyLevels {
+	var buyOrders []models.MarketOrder
+	var sellOrders []models.MarketOrder
+	for _, order := range Response.SellLevels {
 		newOrder := models.MarketOrder{
-			Price:  ask.Price,
-			Amount: ask.Volume,
+			Price:  order.Price,
+			Amount: order.Volume,
 		}
-		orders = append(orders, newOrder)
+		sellOrders = append(sellOrders, newOrder)
 	}
+	for _, order := range Response.BuyLevels {
+		newOrder := models.MarketOrder{
+			Price:  order.Price,
+			Amount: order.Volume,
+		}
+		buyOrders = append(buyOrders, newOrder)
+	}
+	orders["buy"] = buyOrders
+	orders["sell"] = sellOrders
 	return orders, err
 }
 

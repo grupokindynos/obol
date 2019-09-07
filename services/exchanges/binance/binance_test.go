@@ -9,7 +9,6 @@ var service = InitService()
 
 func TestService_CoinMarketOrders(t *testing.T) {
 	orders, err := service.CoinMarketOrders("grs")
-	// TODO handle possible error types
 	if err != nil {
 		assert.Nil(t, orders)
 		assert.NotNil(t, err)

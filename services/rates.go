@@ -24,7 +24,7 @@ const UpdateFiatRatesTimeFrame = 60 * 60 // 1 Hour timeframe
 
 //Exchange is the interface to make sure all exchange services have the same properties
 type Exchange interface {
-	CoinMarketOrders(coin string) (orders []models.MarketOrder, err error)
+	CoinMarketOrders(coin string) (orders map[string][]models.MarketOrder, err error)
 }
 
 var FiatRates *models.FiatRates
@@ -59,9 +59,9 @@ func (rs *RateSevice) GetCoinRates(coin *coinfactory.Coin) (rates map[string]flo
 	newRates := make(map[string]float64)
 	for code, singleRate := range btcRates {
 		if code == "BTC" {
-			newRates[code] = math.Floor((ratesWall[0].Price*singleRate)*1e8) / 1e8
+			newRates[code] = math.Floor((ratesWall["sell"][0].Price*singleRate)*1e8) / 1e8
 		} else {
-			newRates[code] = math.Floor((ratesWall[0].Price*singleRate)*10000) / 10000
+			newRates[code] = math.Floor((ratesWall["sell"][0].Price*singleRate)*10000) / 10000
 		}
 	}
 	return newRates, err
@@ -87,22 +87,36 @@ func (rs *RateSevice) GetCoinToCoinRates(coinFrom *coinfactory.Coin, coinTo *coi
 }
 
 func (rs *RateSevice) GetCoinToCoinRatesWithAmount(coinFrom *coinfactory.Coin, coinTo *coinfactory.Coin, amount float64) (rate float64, err error) {
-	if coinFrom.Tag == "BTC" {
-		return rate, config.ErrorNoC2CWithBTC
-	}
 	if coinFrom.Tag == coinTo.Tag {
 		return rate, config.ErrorNoC2CWithSameCoin
 	}
+	var coinMarkets map[string][]models.MarketOrder
 	// First get the orders wall from the coin we are converting
-	coinFromMarkets, err := rs.GetCoinOrdersWall(coinFrom)
+	if coinFrom.Tag == "BTC" {
+		coinMarkets, err = rs.GetCoinOrdersWall(coinTo)
+		if err != nil {
+			return 0, err
+		}
+	} else {
+		coinMarkets, err = rs.GetCoinOrdersWall(coinFrom)
+		if err != nil {
+			return 0, err
+		}
+	}
 	// Get BTC rate of the coin.
 	coinToRates, err := rs.GetCoinRates(coinTo)
 	coinToBTCRate := coinToRates["BTC"]
 	// Init vars for loop
 	var countedAmount float64
 	var pricesSum float64
+	var orders []models.MarketOrder
+	if coinFrom.Tag == "BTC" {
+		orders = coinMarkets["buy"]
+	} else {
+		orders = coinMarkets["sell"]
+	}
 	// Looping against values on exchange to make a approachable rate based on the amount.
-	for _, order := range coinFromMarkets {
+	for _, order := range orders {
 		if countedAmount+order.Amount >= amount {
 			diff := math.Abs((countedAmount + order.Amount) - amount)
 			newAmount := order.Amount - diff
@@ -123,7 +137,7 @@ func (rs *RateSevice) GetCoinToCoinRatesWithAmount(coinFrom *coinfactory.Coin, c
 	return finaleRate, err
 }
 
-func (rs *RateSevice) GetCoinOrdersWall(coin *coinfactory.Coin) (orders []models.MarketOrder, err error) {
+func (rs *RateSevice) GetCoinOrdersWall(coin *coinfactory.Coin) (orders map[string][]models.MarketOrder, err error) {
 	var service Exchange
 	switch coin.Exchange {
 	case "binance":

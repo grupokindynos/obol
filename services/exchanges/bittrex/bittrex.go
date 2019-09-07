@@ -17,7 +17,7 @@ type Service struct {
 // CoinMarketOrders is used to get the market sell and buy wall from a coin
 func (s *Service) CoinMarketOrders(coin string) (orders map[string][]models.MarketOrder, err error) {
 	orders = make(map[string][]models.MarketOrder)
-	res, err := config.HttpClient.Get(s.MarketRateURL + strings.ToUpper(coin) + "BTC")
+	res, err := config.HttpClient.Get(s.MarketRateURL + "BTC-" + strings.ToUpper(coin) + "&type=both")
 	if err != nil {
 		return orders, config.ErrorRequestTimeout
 	}
@@ -55,7 +55,7 @@ func (s *Service) CoinMarketOrders(coin string) (orders map[string][]models.Mark
 // InitService is used to safely start a new service reference.
 func InitService() *Service {
 	s := &Service{
-		MarketRateURL: "https://api.bittrex.com/api/v1.1/public/getorderbook?market=BTC-",
+		MarketRateURL: "https://api.bittrex.com/api/v1.1/public/getorderbook?market=",
 	}
 	return s
 }

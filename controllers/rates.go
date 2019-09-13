@@ -5,6 +5,7 @@ import (
 	"github.com/grupokindynos/obol/config"
 	"github.com/grupokindynos/obol/models/coin-factory"
 	"github.com/grupokindynos/obol/services"
+	"sort"
 	"strconv"
 )
 
@@ -22,6 +23,9 @@ func (rc *RateController) GetCoinRates(c *gin.Context) {
 		return
 	}
 	rates, err := rc.RateService.GetCoinRates(coinData, false)
+	sort.Slice(rates, func(i, j int) bool {
+		return rates[i].Code < rates[j].Code
+	})
 	config.GlobalResponse(rates, err, c)
 	return
 }

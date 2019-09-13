@@ -44,17 +44,21 @@ type RateSevice struct {
 }
 
 // GetCoinRates is the main function to get the rates of a coin using the OpenRates structure
-func (rs *RateSevice) GetCoinRates(coin *coinfactory.Coin, buyWall bool) (rates map[string]float64, err error) {
+func (rs *RateSevice) GetCoinRates(coin *coinfactory.Coin, buyWall bool) (rates []models.Rate, err error) {
 	btcRates, err := rs.GetBtcRates()
 	if err != nil {
 		return rates, err
 	}
 	if coin.Tag == "BTC" {
-		btcRatesMap := make(map[string]float64)
 		for code, rate := range btcRates {
-			btcRatesMap[code] = rate
+			rate := models.Rate{
+				Code: code,
+				Name: models.OpenRateNames[code],
+				Rate: rate,
+			}
+			rates = append(rates, rate)
 		}
-		return btcRatesMap, nil
+		return rates, nil
 	}
 	ratesWall, err := rs.GetCoinOrdersWall(coin)
 	if err != nil {
@@ -66,34 +70,56 @@ func (rs *RateSevice) GetCoinRates(coin *coinfactory.Coin, buyWall bool) (rates 
 	} else {
 		orders = ratesWall["sell"]
 	}
-	newRates := make(map[string]float64)
 	for code, singleRate := range btcRates {
-		if code == "BTC" {
-			newRates[code] = math.Floor((orders[0].Price*singleRate)*1e8) / 1e8
-		} else {
-			newRates[code] = math.Floor((orders[0].Price*singleRate)*10000) / 10000
+		rate := models.Rate{
+			Code: code,
+			Name: models.OpenRateNames[code],
 		}
+		if code == "BTC" {
+			rate.Rate = math.Floor((orders[0].Price*singleRate)*1e8) / 1e8
+		} else {
+			rate.Rate = math.Floor((orders[0].Price*singleRate)*10000) / 10000
+		}
+		rates = append(rates, rate)
 	}
-	return newRates, err
+	return rates, err
 }
 
 // GetCoinToCoinRates will return the rates from a crypto to a crypto using the exchanges data
 func (rs *RateSevice) GetCoinToCoinRates(coinFrom *coinfactory.Coin, coinTo *coinfactory.Coin) (rate float64, err error) {
 	if coinFrom.Tag == "BTC" {
 		coinRates, err := rs.GetCoinRates(coinTo, true)
-		return coinRates["BTC"], err
+		for _, rate := range coinRates {
+			if rate.Code == "BTC" {
+				return rate.Rate, err
+			}
+		}
 	}
 	if coinTo.Tag == "BTC" {
 		coinRates, err := rs.GetCoinRates(coinFrom, false)
-		return 1 / coinRates["BTC"], err
+		for _, rate := range coinRates {
+			if rate.Code == "BTC" {
+				return 1 / rate.Rate, err
+			}
+		}
 	}
 	if coinFrom.Tag == coinTo.Tag {
 		return rate, config.ErrorNoC2CWithSameCoin
 	}
 	coinFromRates, err := rs.GetCoinRates(coinFrom, false)
 	coinToRates, err := rs.GetCoinRates(coinTo, false)
-	coinFromCommonRate := coinFromRates["BTC"]
-	coinToCommonRate := coinToRates["BTC"]
+	var coinFromCommonRate float64
+	var coinToCommonRate float64
+	for _, rate := range coinFromRates {
+		if rate.Code == "BTC" {
+			coinFromCommonRate = rate.Rate
+		}
+	}
+	for _, rate := range coinToRates {
+		if rate.Code == "BTC" {
+			coinToCommonRate = rate.Rate
+		}
+	}
 	return coinToCommonRate / coinFromCommonRate, err
 }
 
@@ -103,7 +129,7 @@ func (rs *RateSevice) GetCoinToCoinRatesWithAmount(coinFrom *coinfactory.Coin, c
 		return rate, config.ErrorNoC2CWithSameCoin
 	}
 	var coinMarkets map[string][]models.MarketOrder
-	var coinRates map[string]float64
+	var coinRates []models.Rate
 	// First get the orders wall from the coin we are converting
 	if coinFrom.Tag == "BTC" {
 		coinMarkets, err = rs.GetCoinOrdersWall(coinTo)
@@ -119,7 +145,12 @@ func (rs *RateSevice) GetCoinToCoinRatesWithAmount(coinFrom *coinfactory.Coin, c
 		coinRates, err = rs.GetCoinRates(coinTo, false)
 	}
 	// Get BTC rate of the coin.
-	coinToBTCRate := coinRates["BTC"]
+	var coinToBTCRate float64
+	for _, rate := range coinRates {
+		if rate.Code == "BTC" {
+			coinToBTCRate = rate.Rate
+		}
+	}
 	// Init vars for loop
 	var countedAmount float64
 	var pricesSum float64

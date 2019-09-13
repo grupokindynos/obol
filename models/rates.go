@@ -17,6 +17,7 @@ type FiatRates struct {
 // Rate is the struct to homologue exchange rate responses
 type Rate struct {
 	Code string  `json:"code"`
+	Name string  `json:"name"`
 	Rate float64 `json:"rate"`
 }
 
@@ -51,6 +52,7 @@ type OpenRates struct {
 		ZAR float64 `json:"ZAR"`
 		USD float64 `json:"USD"`
 		MXN float64 `json:"MXN"`
+		EUR float64 `json:"EUR"`
 		ILS float64 `json:"ILS"`
 		GBP float64 `json:"GBP"`
 		KRW float64 `json:"KRW"`
@@ -58,4 +60,41 @@ type OpenRates struct {
 	} `json:"rates"`
 	Base string `json:"base"`
 	Date string `json:"date"`
+}
+
+var OpenRateNames = map[string]string{
+	"CAD": "Canadian Dollar",
+	"HKD": "Hong Kong Dollar",
+	"ISK": "Iceland Krona",
+	"PHP": "Philippine Peso",
+	"DKK": "Danish Krone",
+	"HUF": "Forint",
+	"CZK": "Czech Koruna",
+	"AUD": "Australian Dollar",
+	"RON": "Leu",
+	"SEK": "Swedish Krona",
+	"IDR": "Rupiah",
+	"INR": "Indian Rupee",
+	"BRL": "Brazilian Real",
+	"RUB": "Russian Ruble",
+	"HRK": "Croatian Kuna",
+	"JPY": "Yen",
+	"THB": "Baht",
+	"CHF": "Swiss Franc",
+	"SGD": "Singapore Dollar",
+	"PLN": "PZloty",
+	"BGN": "Bulgarian Lev",
+	"TRY": "Turkish Lira",
+	"CNY": "Yuan",
+	"NOK": "Norwegian Krone",
+	"NZD": "New Zealand Dollar",
+	"ZAR": "Rand",
+	"USD": "US Dollar",
+	"MXN": "Mexican Peso",
+	"EUR": "Euro",
+	"ILS": "New Israeli Shekel",
+	"GBP": "Pound Sterling",
+	"KRW": "South Korean Won",
+	"MYR": "Malaysian Ringgit",
+	"BTC": "Bitcoin",
 }

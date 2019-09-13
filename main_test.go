@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"github.com/grupokindynos/obol/config"
+	"github.com/grupokindynos/obol/models"
 	"github.com/grupokindynos/obol/models/coin-factory"
 	"github.com/stretchr/testify/assert"
 	"net/http"
@@ -30,12 +31,12 @@ func TestSimpleRates(t *testing.T) {
 		assert.True(t, exists)
 		assert.Equal(t, float64(1), value)
 		ratesData := response["data"]
-		var ratesMap map[string]float64
+		var ratesArray []models.Rate
 		ratesBytes, err := json.Marshal(ratesData)
 		assert.Nil(t, err)
-		err = json.Unmarshal(ratesBytes, &ratesMap)
+		err = json.Unmarshal(ratesBytes, &ratesArray)
 		assert.Nil(t, err)
-		assert.NotZero(t, ratesMap["BTC"])
+		assert.NotZero(t, len(ratesArray))
 	}
 }
 

@@ -9,8 +9,6 @@ import (
 	"github.com/grupokindynos/obol/services"
 	_ "github.com/heroku/x/hmetrics/onload"
 	"github.com/joho/godotenv"
-	limit "github.com/yangxikun/gin-limit-by-key"
-	"golang.org/x/time/rate"
 	"net/http"
 	"os"
 	"time"
@@ -43,13 +41,13 @@ func GetApp() *gin.Engine {
 func ApplyRoutes(r *gin.Engine) {
 	api := r.Group("/")
 	{
-		api.Use(limit.NewRateLimiter(func(c *gin.Context) string {
+/*		api.Use(limit.NewRateLimiter(func(c *gin.Context) string {
 			return c.ClientIP()
 		}, func(c *gin.Context) (*rate.Limiter, time.Duration) {
 			return rate.NewLimiter(rate.Every(100*time.Hour), 100), time.Hour
 		}, func(c *gin.Context) {
 			c.AbortWithStatus(429)
-		}))
+		}))*/
 		store := persistence.NewInMemoryStore(time.Second)
 		rateService := services.InitRateService()
 		rateCtrl := controllers.RateController{RateService: rateService}

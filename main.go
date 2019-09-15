@@ -58,7 +58,7 @@ func ApplyRoutes(r *gin.Engine) {
 
 		// Verification for test TODO remove
 		api.GET("loaderio-c3e33c7d2ea142a8503c633c28d27531", func(context *gin.Context) {
-			context.JSON(200, "loaderio-c3e33c7d2ea142a8503c633c28d27531")
+			context.String(200, "loaderio-c3e33c7d2ea142a8503c633c28d27531")
 		})
 	}
 	r.NoRoute(func(c *gin.Context) {

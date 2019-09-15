@@ -55,6 +55,11 @@ func ApplyRoutes(r *gin.Engine) {
 		rateCtrl := controllers.RateController{RateService: rateService}
 		api.GET("simple/:coin", cache.CachePage(store, time.Minute*5, rateCtrl.GetCoinRates))
 		api.GET("complex/:fromcoin/:tocoin", cache.CachePage(store, time.Minute*5, rateCtrl.GetCoinRateFromCoinToCoin))
+
+		// Verification for test TODO remove
+		api.GET("loaderio-c3e33c7d2ea142a8503c633c28d27531", func(context *gin.Context) {
+			context.JSON(200, "loaderio-c3e33c7d2ea142a8503c633c28d27531")
+		})
 	}
 	r.NoRoute(func(c *gin.Context) {
 		c.String(http.StatusNotFound, "Not Found")

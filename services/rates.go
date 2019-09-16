@@ -11,6 +11,7 @@ import (
 	"github.com/grupokindynos/obol/services/exchanges/bittrex"
 	"github.com/grupokindynos/obol/services/exchanges/crex24"
 	"github.com/grupokindynos/obol/services/exchanges/cryptobridge"
+	"github.com/grupokindynos/obol/services/exchanges/kucoin"
 	"github.com/grupokindynos/obol/services/exchanges/novaexchange"
 	"github.com/grupokindynos/obol/services/exchanges/southxhcange"
 	"github.com/grupokindynos/obol/services/exchanges/stex"
@@ -41,6 +42,7 @@ type RateSevice struct {
 	StexService         *stex.Service
 	SouthXChangeService *southxhcange.Service
 	NovaExchangeService *novaexchange.Service
+	KuCoinService       *kucoin.Service
 }
 
 // GetCoinRates is the main function to get the rates of a coin using the OpenRates structure
@@ -199,6 +201,8 @@ func (rs *RateSevice) GetCoinOrdersWall(coin *coinfactory.Coin) (orders map[stri
 		service = rs.CryptoBridgeService
 	case "crex24":
 		service = rs.Crex24Service
+	case "kucoin":
+		service = rs.KuCoinService
 	case "novaexchange":
 		service = rs.NovaExchangeService
 	case "stex":
@@ -219,6 +223,8 @@ func (rs *RateSevice) GetCoinOrdersWall(coin *coinfactory.Coin) (orders map[stri
 			fallBackService = rs.BittrexService
 		case "cryptobridge":
 			fallBackService = rs.CryptoBridgeService
+		case "kucoin":
+			fallBackService = rs.KuCoinService
 		case "crex24":
 			fallBackService = rs.Crex24Service
 		case "novaexchange":
@@ -303,6 +309,7 @@ func InitRateService() *RateSevice {
 		StexService:         stex.InitService(),
 		SouthXChangeService: southxhcange.InitService(),
 		NovaExchangeService: novaexchange.InitService(),
+		KuCoinService:       kucoin.InitService(),
 	}
 	return rs
 }

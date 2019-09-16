@@ -20,6 +20,12 @@ var (
 		Exchange:         "bitso",
 		FallBackExchange: "",
 	}
+	onion = Coin{
+		Tag:              "ONION",
+		Name:             "deeponion",
+		Exchange:         "kucoin",
+		FallBackExchange: "crex24",
+	}
 	colossus = Coin{
 		Tag:              "COLX",
 		Name:             "colossus",
@@ -76,13 +82,14 @@ var (
 	}
 )
 
-//Coins is the main array where used coins are stored
+// Coins is the main array where used coins are stored
 type Coins []Coin
 
-//CoinFactory refers to the coins that are being used on the API instance
+// CoinFactory refers to the coins that are being used on the API instance
 var CoinFactory = Coins{
 	bitcoin,
 	polis,
+	onion,
 	dash,
 	litecoin,
 	digibyte,
@@ -93,7 +100,7 @@ var CoinFactory = Coins{
 	snowgem,
 }
 
-//GetCoin is the safe way to check if a coin exists and retrieve the coin data
+// GetCoin is the safe way to check if a coin exists and retrieve the coin data
 func GetCoin(tag string) (*Coin, error) {
 	for _, v := range CoinFactory {
 		if v.Tag == strings.ToUpper(tag) {

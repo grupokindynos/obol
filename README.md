@@ -1,6 +1,6 @@
 # Obol
 
-[![CircleCI](https://circleci.com/gh/grupokindynos/obol.svg?style=svg)](https://circleci.com/gh/grupokindynos/obol)
+![Actions](https://github.com/grupokindynos/obol/workflows/Obol/badge.svg)
 [![codecov](https://codecov.io/gh/grupokindynos/obol/branch/master/graph/badge.svg?token=doQVTdPAe5)](https://codecov.io/gh/grupokindynos/obol)
 [![Go Report](https://goreportcard.com/badge/github.com/grupokindynos/obol)](https://goreportcard.com/report/github.com/grupokindynos/obol)
 [![GoDocs](https://godoc.org/github.com/grupokindynos/obol?status.svg)](http://godoc.org/github.com/grupokindynos/obol)

@@ -3,7 +3,7 @@ on: [push]
 jobs:
 
   build:
-    name: Build
+    name: Obol
     runs-on: ubuntu-latest
     steps:
 
@@ -13,12 +13,19 @@ jobs:
         go-version: 1.13
       id: go
 
-    - name: Check out code into the Go module directory
+    - name: Check out code
       uses: actions/checkout@v1
 
     - name: Get dependencies
-      run: |
-        go mod download
+      run: go mod download
 
     - name: Build
       run: go build -v .
+
+    - name: Test
+      run: go test ./... -coverprofile=coverage.txt -covermode=atomic
+
+    - name: Code Coverage
+      uses: codecov/codecov-action@v1.0.2
+        with:
+          file: ./coverage.xml

@@ -52,15 +52,7 @@ func (rs *RateSevice) GetCoinRates(coin *coinfactory.Coin, buyWall bool) (rates 
 		return rates, err
 	}
 	if coin.Tag == "BTC" {
-		for code, rate := range btcRates {
-			rate := models.Rate{
-				Code: code,
-				Name: models.OpenRateNames[code],
-				Rate: rate,
-			}
-			rates = append(rates, rate)
-		}
-		return rates, nil
+		return btcRates, nil
 	}
 	ratesWall, err := rs.GetCoinOrdersWall(coin)
 	if err != nil {
@@ -72,15 +64,15 @@ func (rs *RateSevice) GetCoinRates(coin *coinfactory.Coin, buyWall bool) (rates 
 	} else {
 		orders = ratesWall["sell"]
 	}
-	for code, singleRate := range btcRates {
+	for _, singleRate := range btcRates {
 		rate := models.Rate{
-			Code: code,
-			Name: models.OpenRateNames[code],
+			Code: singleRate.Code,
+			Name: singleRate.Name,
 		}
-		if code == "BTC" {
-			rate.Rate = math.Floor((orders[0].Price*singleRate)*1e8) / 1e8
+		if singleRate.Code == "BTC" {
+			rate.Rate = math.Floor((orders[0].Price*singleRate.Rate)*1e8) / 1e8
 		} else {
-			rate.Rate = math.Floor((orders[0].Price*singleRate)*10000) / 10000
+			rate.Rate = math.Floor((orders[0].Price*singleRate.Rate)*10000) / 10000
 		}
 		rates = append(rates, rate)
 	}
@@ -263,16 +255,25 @@ func (rs *RateSevice) GetBtcMxnRate() (float64, error) {
 }
 
 // GetBtcRates will return the Bitcoin rates using the OpenRates structure
-func (rs *RateSevice) GetBtcRates() (rates map[string]float64, err error) {
+func (rs *RateSevice) GetBtcRates() (rates []models.Rate, err error) {
 	if rs.FiatRates.LastUpdated.Unix()+UpdateFiatRatesTimeFrame > time.Now().Unix() {
 		loadFiatRates()
 	}
 	mxnRate, err := rs.GetBtcMxnRate()
-	rates = make(map[string]float64)
 	for key, rate := range FiatRates.Rates {
-		rates[key] = rate * mxnRate
+		rate := models.Rate{
+			Code: key,
+			Name: models.OpenRateNames[key],
+			Rate: rate * mxnRate,
+		}
+		rates = append(rates, rate)
 	}
-	rates["BTC"] = 1
+	btcRate := models.Rate{
+		Code: "BTC",
+		Name: "Bitcoin",
+		Rate: 1,
+	}
+	rates = append(rates, btcRate)
 	return rates, err
 }
 

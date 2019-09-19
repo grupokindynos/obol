@@ -3,9 +3,9 @@ package services
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/grupokindynos/common/coin-factory"
 	"github.com/grupokindynos/obol/config"
 	"github.com/grupokindynos/obol/models"
-	coinfactory "github.com/grupokindynos/obol/models/coin-factory"
 	"github.com/grupokindynos/obol/models/exchanges"
 	"github.com/grupokindynos/obol/services/exchanges/binance"
 	"github.com/grupokindynos/obol/services/exchanges/bittrex"

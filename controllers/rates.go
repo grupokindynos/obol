@@ -2,8 +2,8 @@ package controllers
 
 import (
 	"github.com/gin-gonic/gin"
+	"github.com/grupokindynos/common/coin-factory"
 	"github.com/grupokindynos/obol/config"
-	"github.com/grupokindynos/obol/models/coin-factory"
 	"github.com/grupokindynos/obol/services"
 	"sort"
 	"strconv"

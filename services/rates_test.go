@@ -1,8 +1,8 @@
 package services
 
 import (
+	"github.com/grupokindynos/common/coin-factory"
 	"github.com/grupokindynos/obol/config"
-	"github.com/grupokindynos/obol/models/coin-factory"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )
@@ -31,11 +31,11 @@ func TestRateSevice_GetBtcMxnRate(t *testing.T) {
 }
 
 func TestRateSevice_GetCoinOrdersWall(t *testing.T) {
-	for _, coin := range coinfactory.CoinFactory {
+	for _, coin := range coinfactory.Coins {
 		if coin.Tag == "BTC" {
 			continue
 		}
-		orders, err := rateService.GetCoinOrdersWall(&coin)
+		orders, err := rateService.GetCoinOrdersWall(coin)
 		// TODO handle possible error types
 		if err != nil {
 			assert.NotNil(t, err)
@@ -48,8 +48,8 @@ func TestRateSevice_GetCoinOrdersWall(t *testing.T) {
 }
 
 func TestRateSevice_GetCoinRates(t *testing.T) {
-	for _, coin := range coinfactory.CoinFactory {
-		rates, err := rateService.GetCoinRates(&coin, false)
+	for _, coin := range coinfactory.Coins {
+		rates, err := rateService.GetCoinRates(coin, false)
 		// TODO handle possible error types
 		if err != nil {
 			assert.NotNil(t, err)

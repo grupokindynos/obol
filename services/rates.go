@@ -3,7 +3,7 @@ package services
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/grupokindynos/common/coin-factory"
+	"github.com/grupokindynos/common/coin-factory/coins"
 	"github.com/grupokindynos/obol/config"
 	"github.com/grupokindynos/obol/models"
 	"github.com/grupokindynos/obol/models/exchanges"
@@ -46,7 +46,7 @@ type RateSevice struct {
 }
 
 // GetCoinRates is the main function to get the rates of a coin using the OpenRates structure
-func (rs *RateSevice) GetCoinRates(coin *coinfactory.Coin, buyWall bool) (rates []models.Rate, err error) {
+func (rs *RateSevice) GetCoinRates(coin *coins.Coin, buyWall bool) (rates []models.Rate, err error) {
 	btcRates, err := rs.GetBtcRates()
 	if err != nil {
 		return rates, err
@@ -80,7 +80,7 @@ func (rs *RateSevice) GetCoinRates(coin *coinfactory.Coin, buyWall bool) (rates 
 }
 
 // GetCoinToCoinRates will return the rates from a crypto to a crypto using the exchanges data
-func (rs *RateSevice) GetCoinToCoinRates(coinFrom *coinfactory.Coin, coinTo *coinfactory.Coin) (rate float64, err error) {
+func (rs *RateSevice) GetCoinToCoinRates(coinFrom *coins.Coin, coinTo *coins.Coin) (rate float64, err error) {
 	if coinFrom.Tag == "BTC" {
 		coinRates, err := rs.GetCoinRates(coinTo, true)
 		for _, rate := range coinRates {
@@ -118,7 +118,7 @@ func (rs *RateSevice) GetCoinToCoinRates(coinFrom *coinfactory.Coin, coinTo *coi
 }
 
 // GetCoinToCoinRatesWithAmount is used to get the rates from crypto to crypto using a specified amount to convert
-func (rs *RateSevice) GetCoinToCoinRatesWithAmount(coinFrom *coinfactory.Coin, coinTo *coinfactory.Coin, amount float64) (rate float64, err error) {
+func (rs *RateSevice) GetCoinToCoinRatesWithAmount(coinFrom *coins.Coin, coinTo *coins.Coin, amount float64) (rate float64, err error) {
 	if coinFrom.Tag == coinTo.Tag {
 		return rate, config.ErrorNoC2CWithSameCoin
 	}
@@ -182,9 +182,9 @@ func (rs *RateSevice) GetCoinToCoinRatesWithAmount(coinFrom *coinfactory.Coin, c
 }
 
 // GetCoinOrdersWall will return the buy/sell orders from selected or fallback exchange
-func (rs *RateSevice) GetCoinOrdersWall(coin *coinfactory.Coin) (orders map[string][]models.MarketOrder, err error) {
+func (rs *RateSevice) GetCoinOrdersWall(coin *coins.Coin) (orders map[string][]models.MarketOrder, err error) {
 	var service Exchange
-	switch coin.Exchange {
+	switch coin.Rates.Exchange {
 	case "binance":
 		service = rs.BinanceService
 	case "bittrex":
@@ -208,7 +208,7 @@ func (rs *RateSevice) GetCoinOrdersWall(coin *coinfactory.Coin) (orders map[stri
 	orders, err = service.CoinMarketOrders(coin.Tag)
 	if err != nil {
 		var fallBackService Exchange
-		switch coin.FallBackExchange {
+		switch coin.Rates.FallBackExchange {
 		case "binance":
 			fallBackService = rs.BinanceService
 		case "bittrex":

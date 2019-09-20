@@ -2,6 +2,7 @@ package services
 
 import (
 	"github.com/grupokindynos/common/coin-factory"
+	"github.com/grupokindynos/common/coin-factory/coins"
 	"github.com/grupokindynos/obol/config"
 	"github.com/stretchr/testify/assert"
 	"testing"
@@ -108,7 +109,7 @@ func TestRateSevice_GetCoinToCoinRatesSameParams(t *testing.T) {
 }
 
 func TestNoServiceForCoin(t *testing.T) {
-	mockCoin := &coinfactory.Coin{Tag: "FaKeCOIN", Name: "FakeCoin"}
+	mockCoin := &coins.Coin{Tag: "FaKeCOIN", Name: "FakeCoin"}
 	_, err := rateService.GetCoinOrdersWall(mockCoin)
 	assert.Equal(t, config.ErrorNoServiceForCoin, err)
 	_, err = rateService.GetCoinRates(mockCoin, false)

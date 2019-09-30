@@ -365,6 +365,7 @@ var FixerRatesNames = map[string]string{
 	"XPF": "CFP Franc",
 	"YER": "Yemeni Rial",
 	"ZAR": "South African Rand",
+	"ZMK": "Zambian Kwacha (pre-2013)",
 	"ZMW": "Zambian Kwacha",
 	"ZWL": "Zimbabwean Dollar",
 }

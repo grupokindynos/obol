@@ -5,11 +5,16 @@ import (
 	"github.com/grupokindynos/common/coin-factory"
 	"github.com/grupokindynos/obol/config"
 	"github.com/grupokindynos/obol/models"
+	"github.com/joho/godotenv"
 	"github.com/stretchr/testify/assert"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 )
+
+func init() {
+	_ = godotenv.Load()
+}
 
 func performRequest(r http.Handler, method, path string) *httptest.ResponseRecorder {
 	req, _ := http.NewRequest(method, path, nil)

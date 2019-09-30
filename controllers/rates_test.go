@@ -5,11 +5,16 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/grupokindynos/obol/config"
 	"github.com/grupokindynos/obol/services"
+	"github.com/joho/godotenv"
 	"github.com/stretchr/testify/assert"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 )
+
+func init() {
+	_ = godotenv.Load("../.env")
+}
 
 func TestRateController_GetCoinRateFromCoinToCoin(t *testing.T) {
 	rateCtrl := loadRateCtrl()

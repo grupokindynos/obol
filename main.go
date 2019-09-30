@@ -19,6 +19,7 @@ import (
 func init() {
 	_ = godotenv.Load()
 }
+
 func main() {
 	port := os.Getenv("PORT")
 	if port == "" {

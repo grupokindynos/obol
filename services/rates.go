@@ -17,6 +17,7 @@ import (
 	"github.com/grupokindynos/obol/services/exchanges/stex"
 	"io/ioutil"
 	"math"
+	"os"
 	"strconv"
 	"time"
 )
@@ -259,12 +260,13 @@ func (rs *RateSevice) GetBtcRates() (rates []models.Rate, err error) {
 	if rs.FiatRates.LastUpdated.Unix()+UpdateFiatRatesTimeFrame > time.Now().Unix() {
 		loadFiatRates()
 	}
-	mxnRate, err := rs.GetBtcMxnRate()
+	btcMxnRate, err := rs.GetBtcMxnRate()
+	newRate := btcMxnRate / FiatRates.Rates["MXN"]
 	for key, rate := range FiatRates.Rates {
 		rate := models.Rate{
 			Code: key,
-			Name: models.OpenRateNames[key],
-			Rate: rate * mxnRate,
+			Name: models.FixerRatesNames[key],
+			Rate: rate * newRate,
 		}
 		rates = append(rates, rate)
 	}
@@ -278,7 +280,7 @@ func (rs *RateSevice) GetBtcRates() (rates []models.Rate, err error) {
 }
 
 func loadFiatRates() {
-	res, err := config.HttpClient.Get(config.OpenRatesURL)
+	res, err := config.HttpClient.Get(config.FixerRatesURL + "?access_key=" + os.Getenv("FIXER_RATES_TOKEN"))
 	if err != nil {
 		fmt.Println("unable to load fiat rates")
 	} else {
@@ -286,7 +288,7 @@ func loadFiatRates() {
 			_ = res.Body.Close()
 		}()
 		contents, _ := ioutil.ReadAll(res.Body)
-		var fiatRates models.OpenRates
+		var fiatRates models.FixerRates
 		_ = json.Unmarshal(contents, &fiatRates)
 		rateBytes, _ := json.Marshal(fiatRates.Rates)
 		ratesMap := make(map[string]float64)

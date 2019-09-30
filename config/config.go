@@ -9,8 +9,8 @@ import (
 )
 
 var (
-	// OpenRatesURL is the base URL for fiat rates based on OpenRates
-	OpenRatesURL = "https://api.exchangeratesapi.io/latest?base=MXN"
+	// FixerRatesURL is the base URL for fiat rates based on FixerRates
+	FixerRatesURL = "http://data.fixer.io/api/latest"
 	// ErrorCoinNotAvailable returns when the specified coin is not configured on the API.
 	ErrorCoinNotAvailable = errors.New("coin not available")
 	// ErrorNoServiceForCoin returns when is not possible to load the service for an exchange

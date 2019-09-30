@@ -23,7 +23,7 @@ jobs:
       run: go build -v .
 
     - name: Test
-      run: go test ./... -coverprofile=coverage.txt -covermode=atomic
+      run: ${{secrets.FIXER_RATES_TOKEN}} go test ./... -coverprofile=coverage.txt -covermode=atomic
 
     - uses: codecov/codecov-action@v1.0.2
       with:

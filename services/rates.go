@@ -23,7 +23,7 @@ import (
 )
 
 // UpdateFiatRatesTimeFrame is the time frame to update fiat rates
-const UpdateFiatRatesTimeFrame = 60 * 60 // 1 Hour timeframe
+const UpdateFiatRatesTimeFrame = 60 * 60 * 24 // 24 Hour timeframe
 
 //Exchange is the interface to make sure all exchange services have the same properties
 type Exchange interface {

@@ -254,7 +254,6 @@ func (rs *RateSevice) GetBtcMxnRate() (float64, error) {
 
 // GetBtcRates will return the Bitcoin rates using the OpenRates structure
 func (rs *RateSevice) GetBtcRates() (rates []models.Rate, err error) {
-	fmt.Println(rs.FiatRates.LastUpdated.Unix()+UpdateFiatRatesTimeFrame < time.Now().Unix())
 	if rs.FiatRates.LastUpdated.Unix()+UpdateFiatRatesTimeFrame < time.Now().Unix() {
 		rs.loadFiatRates()
 	}

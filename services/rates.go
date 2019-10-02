@@ -30,9 +30,6 @@ type Exchange interface {
 	CoinMarketOrders(coin string) (orders map[string][]models.MarketOrder, err error)
 }
 
-// FiatRates is the model of the OpenRates fiat rates information
-var FiatRates *models.FiatRates
-
 // RateSevice is the main wrapper for all different exchanges and fiat rates data
 type RateSevice struct {
 	FiatRates           *models.FiatRates
@@ -257,12 +254,13 @@ func (rs *RateSevice) GetBtcMxnRate() (float64, error) {
 
 // GetBtcRates will return the Bitcoin rates using the OpenRates structure
 func (rs *RateSevice) GetBtcRates() (rates []models.Rate, err error) {
-	if rs.FiatRates.LastUpdated.Unix()+UpdateFiatRatesTimeFrame > time.Now().Unix() {
-		loadFiatRates()
+	fmt.Println(rs.FiatRates.LastUpdated.Unix()+UpdateFiatRatesTimeFrame < time.Now().Unix())
+	if rs.FiatRates.LastUpdated.Unix()+UpdateFiatRatesTimeFrame < time.Now().Unix() {
+		rs.loadFiatRates()
 	}
 	btcMxnRate, err := rs.GetBtcMxnRate()
-	newRate := btcMxnRate / FiatRates.Rates["MXN"]
-	for key, rate := range FiatRates.Rates {
+	newRate := btcMxnRate / rs.FiatRates.Rates["MXN"]
+	for key, rate := range rs.FiatRates.Rates {
 		rate := models.Rate{
 			Code: key,
 			Name: models.FixerRatesNames[key],
@@ -279,7 +277,7 @@ func (rs *RateSevice) GetBtcRates() (rates []models.Rate, err error) {
 	return rates, err
 }
 
-func loadFiatRates() {
+func (rs *RateSevice) loadFiatRates() {
 	res, err := config.HttpClient.Get(config.FixerRatesURL + "?access_key=" + os.Getenv("FIXER_RATES_TOKEN"))
 	if err != nil {
 		fmt.Println("unable to load fiat rates")
@@ -293,7 +291,7 @@ func loadFiatRates() {
 		rateBytes, _ := json.Marshal(fiatRates.Rates)
 		ratesMap := make(map[string]float64)
 		_ = json.Unmarshal(rateBytes, &ratesMap)
-		FiatRates = &models.FiatRates{
+		rs.FiatRates = &models.FiatRates{
 			Rates:       ratesMap,
 			LastUpdated: time.Now(),
 		}
@@ -302,9 +300,11 @@ func loadFiatRates() {
 
 // InitRateService is a safe to use function to init the rate service.
 func InitRateService() *RateSevice {
-	loadFiatRates()
 	rs := &RateSevice{
-		FiatRates:           FiatRates,
+		FiatRates: &models.FiatRates{
+			Rates:       nil,
+			LastUpdated: time.Time{},
+		},
 		BittrexService:      bittrex.InitService(),
 		BinanceService:      binance.InitService(),
 		CryptoBridgeService: cryptobridge.InitService(),
@@ -314,5 +314,6 @@ func InitRateService() *RateSevice {
 		NovaExchangeService: novaexchange.InitService(),
 		KuCoinService:       kucoin.InitService(),
 	}
+	rs.loadFiatRates()
 	return rs
 }

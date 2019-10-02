@@ -23,6 +23,8 @@ jobs:
       run: go build -v .
 
     - name: Test
+      env:
+        FIXER_RATES_TOKEN: ${{ secrets.FIXER_RATES_TOKEN }}
       run: go test ./... -coverprofile=coverage.txt -covermode=atomic
 
     - uses: codecov/codecov-action@v1.0.2

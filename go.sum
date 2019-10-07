@@ -87,10 +87,6 @@ github.com/gopherjs/gopherjs v0.0.0-20181017120253-0766667cb4d1/go.mod h1:wJfORR
 github.com/gostaticanalysis/analysisutil v0.0.0-20190318220348-4088753ea4d3/go.mod h1:eEOZF4jCKGi+aprrirO9e7WKB3beBRtWgqGunKl6pKE=
 github.com/grpc-ecosystem/go-grpc-middleware v1.0.0/go.mod h1:FiyG127CGDf3tlThmgyCl78X/SZQqEOJBCDaAfeWzPs=
 github.com/grpc-ecosystem/grpc-gateway v1.9.0/go.mod h1:vNeuVxBJEsws4ogUvrchl83t/GYV9WGTSLVdBhOQFDY=
-github.com/grupokindynos/common v0.0.0-20190920183702-c7bdde5bd0af h1:g5LJiMnhcbYme6GuvF3id6ngKhrgdVKwzVfqmq3Zhb8=
-github.com/grupokindynos/common v0.0.0-20190920183702-c7bdde5bd0af/go.mod h1:HPJYsCCOe1qlwpFlz6Na8SbqypUKEldUXL4dXx2nX00=
-github.com/grupokindynos/common v0.0.0-20191002182547-4eac7138a118 h1:CM2sub8Rn91RTqRw0VbgiBrVw1SZ84ADgQK+gxkPJzY=
-github.com/grupokindynos/common v0.0.0-20191002182547-4eac7138a118/go.mod h1:LWwa+FAKwMTYMlmxqB+BFH2VyKth9j2Lkk0l1mLd6XU=
 github.com/grupokindynos/common v0.0.0-20191004163004-a8f80611a220 h1:0z8jMHrVYMM3Hz+V7gFb3YLcOaOphixA5riAXf9h6rU=
 github.com/grupokindynos/common v0.0.0-20191004163004-a8f80611a220/go.mod h1:LWwa+FAKwMTYMlmxqB+BFH2VyKth9j2Lkk0l1mLd6XU=
 github.com/hashicorp/hcl v0.0.0-20180404174102-ef8a98b0bbce/go.mod h1:oZtUIOe8dh44I2q6ScRibXws4Ajl+d+nod3AaR9vL5w=

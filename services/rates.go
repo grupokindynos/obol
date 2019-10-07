@@ -154,31 +154,31 @@ func (rs *RateSevice) GetCoinToCoinRatesWithAmount(coinFrom *coins.Coin, coinTo 
 	} else {
 		orders = coinMarkets["sell"]
 	}
-	// Looping against values on exchange to make a approachable rate based on the amount.
+	// Looping against values on exchange to make an approachable rate based on the amount.
 	for _, order := range orders {
 		if countedAmount+order.Amount >= amount {
 			diff := math.Abs((countedAmount + order.Amount) - amount)
 			newAmount := order.Amount - diff
 			countedAmount += newAmount
-			percentaje := newAmount / amount
-			pricesSum += order.Price * percentaje
+			percentage := newAmount / amount
+			pricesSum += order.Price * percentage
 		} else {
 			countedAmount += order.Amount
-			percentaje := order.Amount / amount
-			pricesSum += order.Price * percentaje
+			percentage := order.Amount / amount
+			pricesSum += order.Price * percentage
 		}
 		if countedAmount >= amount {
 			break
 		}
 	}
 	priceTrunk := math.Floor(pricesSum*1e8) / 1e8
-	var finaleRate float64
+	var finalRate float64
 	if coinFrom.Tag == "BTC" {
-		finaleRate = priceTrunk
+		finalRate = priceTrunk
 	} else {
-		finaleRate = coinToBTCRate / priceTrunk
+		finalRate = coinToBTCRate / priceTrunk
 	}
-	return finaleRate, err
+	return finalRate, err
 }
 
 // GetCoinOrdersWall will return the buy/sell orders from selected or fallback exchange

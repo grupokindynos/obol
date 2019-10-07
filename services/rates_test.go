@@ -65,7 +65,7 @@ func TestRateSevice_GetCoinRates(t *testing.T) {
 func TestRateSevice_GetCoinToCoinRatesWithAmount(t *testing.T) {
 	polis, _ := coinfactory.GetCoin("polis")
 	dash, _ := coinfactory.GetCoin("dash")
-	rate, err := rateService.GetCoinToCoinRatesWithAmount(polis, dash, 100)
+	rate, err := rateService.GetCoinToCoinRatesWithAmount(polis, dash, 100, "buy")
 	assert.Nil(t, err)
 	assert.NotZero(t, rate)
 }
@@ -96,7 +96,7 @@ func TestRateSevice_GetCoinToCoinRates(t *testing.T) {
 
 func TestRateSevice_GetCoinToCoinRatesWithAmountSameParams(t *testing.T) {
 	polis, _ := coinfactory.GetCoin("polis")
-	rate, err := rateService.GetCoinToCoinRatesWithAmount(polis, polis, 100)
+	rate, err := rateService.GetCoinToCoinRatesWithAmount(polis, polis, 100, "buy")
 	assert.Zero(t, rate)
 	assert.Equal(t, config.ErrorNoC2CWithSameCoin, err)
 }

@@ -66,13 +66,14 @@ func (rc *RateController) GetCoinRateFromCoinToCoin(c *gin.Context) {
 		return
 	}
 	amount := c.Query("amount")
+	wall := c.Query("orders")
 	if amount != "" {
 		amountNum, err := strconv.ParseFloat(amount, 64)
 		if err != nil {
 			responses.GlobalResponseError(nil, config.ErrorInvalidAmountOnC2C, c)
 			return
 		}
-		rates, err := rc.RateService.GetCoinToCoinRatesWithAmount(fromCoinData, toCoinData, amountNum)
+		rates, err := rc.RateService.GetCoinToCoinRatesWithAmount(fromCoinData, toCoinData, amountNum, wall)
 		responses.GlobalResponseError(rates, nil, c)
 		return
 	}

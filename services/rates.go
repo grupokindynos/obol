@@ -127,7 +127,7 @@ func (rs *RateSevice) GetCoinToCoinRates(coinFrom *coins.Coin, coinTo *coins.Coi
 }
 
 // GetCoinToCoinRatesWithAmount is used to get the rates from crypto to crypto using a specified amount to convert
-func (rs *RateSevice) GetCoinToCoinRatesWithAmount(coinFrom *coins.Coin, coinTo *coins.Coin, amount float64) (rate models.CoinToCoinWithAmountResponse, err error) {
+func (rs *RateSevice) GetCoinToCoinRatesWithAmount(coinFrom *coins.Coin, coinTo *coins.Coin, amount float64, wall string) (rate models.CoinToCoinWithAmountResponse, err error) {
 	if coinFrom.Tag == coinTo.Tag {
 		return rate, config.ErrorNoC2CWithSameCoin
 	}
@@ -154,6 +154,12 @@ func (rs *RateSevice) GetCoinToCoinRatesWithAmount(coinFrom *coins.Coin, coinTo 
 			coinToBTCRate = rate.Rate
 		}
 	}
+	var orderWalls string
+	if wall != "" {
+		orderWalls = wall
+	} else {
+		orderWalls = "sell"
+	}
 	// Init vars for loop
 	var countedAmount float64
 	var pricesSum float64
@@ -161,7 +167,7 @@ func (rs *RateSevice) GetCoinToCoinRatesWithAmount(coinFrom *coins.Coin, coinTo 
 	if coinFrom.Tag == "BTC" {
 		orders = coinMarkets["buy"]
 	} else {
-		orders = coinMarkets["sell"]
+		orders = coinMarkets[orderWalls]
 	}
 	ratesResponse := models.CoinToCoinWithAmountResponse{
 		Rates:        make(map[string]string),

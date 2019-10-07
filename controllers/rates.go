@@ -5,15 +5,25 @@ import (
 	"github.com/grupokindynos/common/coin-factory"
 	"github.com/grupokindynos/common/responses"
 	"github.com/grupokindynos/obol/config"
+	"github.com/grupokindynos/obol/models"
 	"github.com/grupokindynos/obol/services"
 	"math"
 	"sort"
 	"strconv"
+	"time"
 )
 
+const RatesCacheTimeFrame = 60 * 15 // 15 minutes
+
+
+type CoinRate struct {
+	LastUpdated int64
+	Rates []models.Rate
+}
 // RateController is the main type for serving the API routes.
 type RateController struct {
 	RateService *services.RateSevice
+	RatesCache map[string]CoinRate
 }
 
 // GetCoinRates will return a rate map based on the selected coin
@@ -24,11 +34,19 @@ func (rc *RateController) GetCoinRates(c *gin.Context) {
 		responses.GlobalResponseError(nil, err, c)
 		return
 	}
+	if rc.RatesCache[coinData.Tag].LastUpdated + RatesCacheTimeFrame > time.Now().Unix() {
+		responses.GlobalResponseError(rc.RatesCache[coinData.Tag].Rates, err, c)
+		return
+	}
 	rates, err := rc.RateService.GetCoinRates(coinData, false)
 	sort.Slice(rates, func(i, j int) bool {
 		return rates[i].Code < rates[j].Code
 	})
-	responses.GlobalResponseError(rates, err, c)
+	rc.RatesCache[coinData.Tag] = CoinRate{
+		LastUpdated: time.Now().Unix(),
+		Rates:       rates,
+	}
+	responses.GlobalResponseError(rc.RatesCache[coinData.Tag].Rates, err, c)
 	return
 }
 

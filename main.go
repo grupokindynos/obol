@@ -1,16 +1,15 @@
 package main
 
 import (
-	"github.com/eabz/cache"
-	"github.com/eabz/cache/persistence"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/grupokindynos/obol/controllers"
 	"github.com/grupokindynos/obol/services"
 	_ "github.com/heroku/x/hmetrics/onload"
 	"github.com/joho/godotenv"
-	limit "github.com/yangxikun/gin-limit-by-key"
-	"golang.org/x/time/rate"
+	"github.com/ulule/limiter/v3"
+	mgin "github.com/ulule/limiter/v3/drivers/middleware/gin"
+	"github.com/ulule/limiter/v3/drivers/store/memory"
 	"net/http"
 	"os"
 	"time"
@@ -44,18 +43,17 @@ func GetApp() *gin.Engine {
 func ApplyRoutes(r *gin.Engine) {
 	api := r.Group("/")
 	{
-		api.Use(limit.NewRateLimiter(func(c *gin.Context) string {
-			return c.ClientIP()
-		}, func(c *gin.Context) (*rate.Limiter, time.Duration) {
-			return rate.NewLimiter(rate.Every(500*time.Millisecond), 10), time.Hour
-		}, func(c *gin.Context) {
-			c.AbortWithStatus(429)
-		}))
-		store := persistence.NewInMemoryStore(time.Second)
+		rate := limiter.Rate{
+			Period: 1 * time.Hour,
+			Limit:  1000,
+		}
+		store := memory.NewStore()
+		limiterMiddleware := mgin.NewMiddleware(limiter.New(store, rate))
+		api.Use(limiterMiddleware)
 		rateService := services.InitRateService()
-		rateCtrl := controllers.RateController{RateService: rateService}
-		api.GET("simple/:coin", cache.CachePage(store, time.Minute*5, rateCtrl.GetCoinRates))
-		api.GET("complex/:fromcoin/:tocoin", cache.CachePage(store, time.Minute*5, rateCtrl.GetCoinRateFromCoinToCoin))
+		rateCtrl := controllers.RateController{RateService: rateService, RatesCache: make(map[string]controllers.CoinRate)}
+		api.GET("simple/:coin", rateCtrl.GetCoinRates)
+		api.GET("complex/:fromcoin/:tocoin", rateCtrl.GetCoinRateFromCoinToCoin)
 	}
 	r.NoRoute(func(c *gin.Context) {
 		c.String(http.StatusNotFound, "Not Found")

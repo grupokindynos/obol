@@ -124,6 +124,6 @@ func TestRateController_GetCoinRatesFromCoinToCoinErrorSecondCoinInvalid(t *test
 }
 
 func loadRateCtrl() *RateController {
-	rc := RateController{RateService: services.InitRateService()}
+	rc := RateController{RateService: services.InitRateService(), RatesCache: make(map[string]CoinRate)}
 	return &rc
 }

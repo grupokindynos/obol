@@ -15,15 +15,15 @@ import (
 
 const RatesCacheTimeFrame = 60 * 15 // 15 minutes
 
-
 type CoinRate struct {
 	LastUpdated int64
-	Rates []models.Rate
+	Rates       []models.Rate
 }
+
 // RateController is the main type for serving the API routes.
 type RateController struct {
 	RateService *services.RateSevice
-	RatesCache map[string]CoinRate
+	RatesCache  map[string]CoinRate
 }
 
 // GetCoinRates will return a rate map based on the selected coin
@@ -34,7 +34,7 @@ func (rc *RateController) GetCoinRates(c *gin.Context) {
 		responses.GlobalResponseError(nil, err, c)
 		return
 	}
-	if rc.RatesCache[coinData.Tag].LastUpdated + RatesCacheTimeFrame > time.Now().Unix() {
+	if rc.RatesCache[coinData.Tag].LastUpdated+RatesCacheTimeFrame > time.Now().Unix() {
 		responses.GlobalResponseError(rc.RatesCache[coinData.Tag].Rates, err, c)
 		return
 	}
@@ -73,8 +73,7 @@ func (rc *RateController) GetCoinRateFromCoinToCoin(c *gin.Context) {
 			return
 		}
 		rates, err := rc.RateService.GetCoinToCoinRatesWithAmount(fromCoinData, toCoinData, amountNum)
-		trunk := math.Floor(rates*1e8) / 1e8
-		responses.GlobalResponseError(trunk, err, c)
+		responses.GlobalResponseError(rates, nil, c)
 		return
 	}
 	rates, err := rc.RateService.GetCoinToCoinRates(fromCoinData, toCoinData)

@@ -23,17 +23,26 @@ import (
 	"time"
 )
 
-// UpdateFiatRatesTimeFrame is the time frame to update fiat rates
-const UpdateFiatRatesTimeFrame = 60 * 60 * 24 // 24 Hour timeframe
+const (
+	// UpdateFiatRatesTimeFrame is the time frame to update fiat rates
+	UpdateFiatRatesTimeFrame = 60 * 60 * 24 // 24 Hour timeframe
+	UpdateBtcRatesTimeFrame  = 60 * 15      // 15 minutes
+)
 
 //Exchange is the interface to make sure all exchange services have the same properties
 type Exchange interface {
 	CoinMarketOrders(coin string) (orders map[string][]models.MarketOrder, err error)
 }
 
+type BtcRates struct {
+	LastUpdated int64
+	Rates       []models.Rate
+}
+
 // RateSevice is the main wrapper for all different exchanges and fiat rates data
 type RateSevice struct {
 	FiatRates           *models.FiatRates
+	BtcRates            BtcRates
 	BittrexService      *bittrex.Service
 	BinanceService      *binance.Service
 	CryptoBridgeService *cryptobridge.Service
@@ -42,7 +51,7 @@ type RateSevice struct {
 	SouthXChangeService *southxhcange.Service
 	NovaExchangeService *novaexchange.Service
 	KuCoinService       *kucoin.Service
-	GraviexService       *graviex.Service
+	GraviexService      *graviex.Service
 }
 
 // GetCoinRates is the main function to get the rates of a coin using the OpenRates structure
@@ -118,7 +127,7 @@ func (rs *RateSevice) GetCoinToCoinRates(coinFrom *coins.Coin, coinTo *coins.Coi
 }
 
 // GetCoinToCoinRatesWithAmount is used to get the rates from crypto to crypto using a specified amount to convert
-func (rs *RateSevice) GetCoinToCoinRatesWithAmount(coinFrom *coins.Coin, coinTo *coins.Coin, amount float64) (rate float64, err error) {
+func (rs *RateSevice) GetCoinToCoinRatesWithAmount(coinFrom *coins.Coin, coinTo *coins.Coin, amount float64) (rate models.CoinToCoinWithAmountResponse, err error) {
 	if coinFrom.Tag == coinTo.Tag {
 		return rate, config.ErrorNoC2CWithSameCoin
 	}
@@ -128,13 +137,13 @@ func (rs *RateSevice) GetCoinToCoinRatesWithAmount(coinFrom *coins.Coin, coinTo 
 	if coinFrom.Tag == "BTC" {
 		coinMarkets, err = rs.GetCoinOrdersWall(coinTo)
 		if err != nil {
-			return 0, err
+			return models.CoinToCoinWithAmountResponse{}, err
 		}
 		coinRates, err = rs.GetCoinRates(coinTo, true)
 	} else {
 		coinMarkets, err = rs.GetCoinOrdersWall(coinFrom)
 		if err != nil {
-			return 0, err
+			return models.CoinToCoinWithAmountResponse{}, err
 		}
 		coinRates, err = rs.GetCoinRates(coinTo, false)
 	}
@@ -154,6 +163,10 @@ func (rs *RateSevice) GetCoinToCoinRatesWithAmount(coinFrom *coins.Coin, coinTo 
 	} else {
 		orders = coinMarkets["sell"]
 	}
+	ratesResponse := models.CoinToCoinWithAmountResponse{
+		Rates:        make(map[string]string),
+		AveragePrice: "",
+	}
 	// Looping against values on exchange to make an approachable rate based on the amount.
 	for _, order := range orders {
 		if countedAmount+order.Amount >= amount {
@@ -162,23 +175,33 @@ func (rs *RateSevice) GetCoinToCoinRatesWithAmount(coinFrom *coins.Coin, coinTo 
 			countedAmount += newAmount
 			percentage := newAmount / amount
 			pricesSum += order.Price * percentage
+			if coinFrom.Tag == "BTC" {
+				ratesResponse.Rates[fmt.Sprintf("%.8f", order.Amount)] = fmt.Sprintf("%.8f", order.Price)
+			} else {
+				ratesResponse.Rates[fmt.Sprintf("%.8f", order.Amount)] = fmt.Sprintf("%.8f", coinToBTCRate/order.Price)
+			}
 		} else {
 			countedAmount += order.Amount
 			percentage := order.Amount / amount
 			pricesSum += order.Price * percentage
+			if coinFrom.Tag == "BTC" {
+				ratesResponse.Rates[fmt.Sprintf("%.8f", order.Amount)] = fmt.Sprintf("%.8f", order.Price)
+			} else {
+				ratesResponse.Rates[fmt.Sprintf("%.8f", order.Amount)] = fmt.Sprintf("%.8f", coinToBTCRate/order.Price)
+			}
 		}
 		if countedAmount >= amount {
 			break
 		}
 	}
-	priceTrunk := math.Floor(pricesSum*1e8) / 1e8
 	var finalRate float64
 	if coinFrom.Tag == "BTC" {
-		finalRate = priceTrunk
+		finalRate = pricesSum
 	} else {
-		finalRate = coinToBTCRate / priceTrunk
+		finalRate = coinToBTCRate / pricesSum
 	}
-	return finalRate, err
+	ratesResponse.AveragePrice = fmt.Sprintf("%.8f", finalRate)
+	return ratesResponse, err
 }
 
 // GetCoinOrdersWall will return the buy/sell orders from selected or fallback exchange
@@ -263,6 +286,9 @@ func (rs *RateSevice) GetBtcRates() (rates []models.Rate, err error) {
 	if rs.FiatRates.LastUpdated.Unix()+UpdateFiatRatesTimeFrame < time.Now().Unix() {
 		rs.loadFiatRates()
 	}
+	if rs.BtcRates.LastUpdated+UpdateBtcRatesTimeFrame > time.Now().Unix() {
+		return rs.BtcRates.Rates, nil
+	}
 	btcMxnRate, err := rs.GetBtcMxnRate()
 	newRate := btcMxnRate / rs.FiatRates.Rates["MXN"]
 	for key, rate := range rs.FiatRates.Rates {
@@ -318,7 +344,7 @@ func InitRateService() *RateSevice {
 		SouthXChangeService: southxhcange.InitService(),
 		NovaExchangeService: novaexchange.InitService(),
 		KuCoinService:       kucoin.InitService(),
-		GraviexService:       graviex.InitService(),
+		GraviexService:      graviex.InitService(),
 	}
 	rs.loadFiatRates()
 	return rs

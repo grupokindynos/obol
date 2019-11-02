@@ -18,7 +18,13 @@ type Service struct {
 // CoinMarketOrders is used to get the market sell and buy wall from a coin
 func (s *Service) CoinMarketOrders(coin string) (orders map[string][]models.MarketOrder, err error) {
 	orders = make(map[string][]models.MarketOrder)
-	res, err := config.HttpClient.Get(s.MarketRateURL + strings.ToUpper(coin) + "BTC")
+	var marketStr string
+	if coin == "TUSD" || coin == "USDC" || coin == "USDT" {
+		marketStr = "BTC" + strings.ToUpper(coin)
+	} else {
+		marketStr = strings.ToUpper(coin) + "BTC"
+	}
+	res, err := config.HttpClient.Get(s.MarketRateURL + marketStr)
 	if err != nil {
 		return orders, config.ErrorRequestTimeout
 	}

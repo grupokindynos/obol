@@ -79,9 +79,17 @@ func (rs *RateSevice) GetCoinRates(coin *coins.Coin, buyWall bool) (rates []mode
 			Name: singleRate.Name,
 		}
 		if singleRate.Code == "BTC" {
-			rate.Rate = math.Floor((orders[0].Price*singleRate.Rate)*1e8) / 1e8
+			if coin.Tag == "USDC" || coin.Tag == "TUSD" || coin.Tag == "USDT" {
+				rate.Rate = math.Floor((singleRate.Rate/orders[0].Price)*1e8) / 1e8
+			} else {
+				rate.Rate = math.Floor((orders[0].Price*singleRate.Rate)*1e8) / 1e8
+			}
 		} else {
-			rate.Rate = math.Floor((orders[0].Price*singleRate.Rate)*10000) / 10000
+			if coin.Tag == "USDC" || coin.Tag == "TUSD" || coin.Tag == "USDT" {
+				rate.Rate = math.Floor((orders[0].Price/singleRate.Rate)*10000) / 10000
+			} else {
+				rate.Rate = math.Floor((orders[0].Price*singleRate.Rate)*10000) / 10000
+			}
 		}
 		rates = append(rates, rate)
 	}
@@ -305,12 +313,6 @@ func (rs *RateSevice) GetBtcRates() (rates []models.Rate, err error) {
 		}
 		rates = append(rates, rate)
 	}
-	btcRate := models.Rate{
-		Code: "BTC",
-		Name: "Bitcoin",
-		Rate: 1,
-	}
-	rates = append(rates, btcRate)
 	return rates, err
 }
 

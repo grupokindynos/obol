@@ -4,12 +4,6 @@ import (
 	"time"
 )
 
-// CoinToCoinWithAmountResponse is the response of a CoinToCoinWithAmount result
-type CoinToCoinWithAmountResponse struct {
-	Rates        map[string]string `json:"rates"`
-	AveragePrice string            `json:"average_price"`
-}
-
 // MarketOrder is just a simple struct to homologue the exchange responses
 type MarketOrder struct {
 	Amount float64 `json:"amount"`

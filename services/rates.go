@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/grupokindynos/common/coin-factory/coins"
+	"github.com/grupokindynos/common/obol"
 	"github.com/grupokindynos/obol/config"
 	"github.com/grupokindynos/obol/models"
 	"github.com/grupokindynos/obol/models/exchanges"
@@ -16,6 +17,7 @@ import (
 	"github.com/grupokindynos/obol/services/exchanges/novaexchange"
 	"github.com/grupokindynos/obol/services/exchanges/southxhcange"
 	"github.com/grupokindynos/obol/services/exchanges/stex"
+	"github.com/grupokindynos/olympus-utils/amount"
 	"io/ioutil"
 	"math"
 	"os"
@@ -135,7 +137,7 @@ func (rs *RateSevice) GetCoinToCoinRates(coinFrom *coins.Coin, coinTo *coins.Coi
 }
 
 // GetCoinToCoinRatesWithAmount is used to get the rates from crypto to crypto using a specified amount to convert
-func (rs *RateSevice) GetCoinToCoinRatesWithAmount(coinFrom *coins.Coin, coinTo *coins.Coin, amount float64, wall string) (rate models.CoinToCoinWithAmountResponse, err error) {
+func (rs *RateSevice) GetCoinToCoinRatesWithAmount(coinFrom *coins.Coin, coinTo *coins.Coin, amountReq float64, wall string) (rate obol.CoinToCoinWithAmountResponse, err error) {
 	if coinFrom.Tag == coinTo.Tag {
 		return rate, config.ErrorNoC2CWithSameCoin
 	}
@@ -145,13 +147,13 @@ func (rs *RateSevice) GetCoinToCoinRatesWithAmount(coinFrom *coins.Coin, coinTo 
 	if coinFrom.Tag == "BTC" {
 		coinMarkets, err = rs.GetCoinOrdersWall(coinTo)
 		if err != nil {
-			return models.CoinToCoinWithAmountResponse{}, err
+			return obol.CoinToCoinWithAmountResponse{}, err
 		}
 		coinRates, err = rs.GetCoinRates(coinTo, true)
 	} else {
 		coinMarkets, err = rs.GetCoinOrdersWall(coinFrom)
 		if err != nil {
-			return models.CoinToCoinWithAmountResponse{}, err
+			return obol.CoinToCoinWithAmountResponse{}, err
 		}
 		coinRates, err = rs.GetCoinRates(coinTo, false)
 	}
@@ -177,34 +179,66 @@ func (rs *RateSevice) GetCoinToCoinRatesWithAmount(coinFrom *coins.Coin, coinTo 
 	} else {
 		orders = coinMarkets[orderWalls]
 	}
-	ratesResponse := models.CoinToCoinWithAmountResponse{
-		Rates:        make(map[string]string),
-		AveragePrice: "",
+	ratesResponse := obol.CoinToCoinWithAmountResponse{
+		Rates:        make(map[float64]float64),
+		AveragePrice: 0,
 	}
 	// Looping against values on exchange to make an approachable rate based on the amount.
 	for _, order := range orders {
-		if countedAmount+order.Amount >= amount {
-			diff := math.Abs((countedAmount + order.Amount) - amount)
+		if countedAmount+order.Amount >= amountReq {
+			diff := math.Abs((countedAmount + order.Amount) - amountReq)
 			newAmount := order.Amount - diff
 			countedAmount += newAmount
-			percentage := newAmount / amount
+			percentage := newAmount / amountReq
 			pricesSum += order.Price * percentage
 			if coinFrom.Tag == "BTC" {
-				ratesResponse.Rates[fmt.Sprintf("%.8f", order.Amount)] = fmt.Sprintf("%.8f", order.Price)
+				orderAmount, err := amount.NewAmount(order.Amount)
+				if err != nil {
+					return obol.CoinToCoinWithAmountResponse{}, err
+				}
+				orderPrice, err := amount.NewAmount(order.Price)
+				if err != nil {
+					return obol.CoinToCoinWithAmountResponse{}, err
+				}
+				ratesResponse.Rates[orderAmount.ToNormalUnit()] = orderPrice.ToNormalUnit()
 			} else {
-				ratesResponse.Rates[fmt.Sprintf("%.8f", order.Amount)] = fmt.Sprintf("%.8f", coinToBTCRate/order.Price)
+				orderAmount, err := amount.NewAmount(order.Amount)
+				if err != nil {
+					return obol.CoinToCoinWithAmountResponse{}, err
+				}
+				orderPrice, err := amount.NewAmount(coinToBTCRate / order.Price)
+				if err != nil {
+					return obol.CoinToCoinWithAmountResponse{}, err
+				}
+				ratesResponse.Rates[orderAmount.ToNormalUnit()] = orderPrice.ToNormalUnit()
 			}
 		} else {
 			countedAmount += order.Amount
-			percentage := order.Amount / amount
+			percentage := order.Amount / amountReq
 			pricesSum += order.Price * percentage
 			if coinFrom.Tag == "BTC" {
-				ratesResponse.Rates[fmt.Sprintf("%.8f", order.Amount)] = fmt.Sprintf("%.8f", order.Price)
+				orderAmount, err := amount.NewAmount(order.Amount)
+				if err != nil {
+					return obol.CoinToCoinWithAmountResponse{}, err
+				}
+				orderPrice, err := amount.NewAmount(order.Price)
+				if err != nil {
+					return obol.CoinToCoinWithAmountResponse{}, err
+				}
+				ratesResponse.Rates[orderAmount.ToNormalUnit()] = orderPrice.ToNormalUnit()
 			} else {
-				ratesResponse.Rates[fmt.Sprintf("%.8f", order.Amount)] = fmt.Sprintf("%.8f", coinToBTCRate/order.Price)
+				orderAmount, err := amount.NewAmount(order.Amount)
+				if err != nil {
+					return obol.CoinToCoinWithAmountResponse{}, err
+				}
+				orderPrice, err := amount.NewAmount(coinToBTCRate / order.Price)
+				if err != nil {
+					return obol.CoinToCoinWithAmountResponse{}, err
+				}
+				ratesResponse.Rates[orderAmount.ToNormalUnit()] = orderPrice.ToNormalUnit()
 			}
 		}
-		if countedAmount >= amount {
+		if countedAmount >= amountReq {
 			break
 		}
 	}
@@ -214,7 +248,11 @@ func (rs *RateSevice) GetCoinToCoinRatesWithAmount(coinFrom *coins.Coin, coinTo 
 	} else {
 		finalRate = coinToBTCRate / pricesSum
 	}
-	ratesResponse.AveragePrice = fmt.Sprintf("%.8f", finalRate)
+	finalRateHand, err := amount.NewAmount(finalRate)
+	if err != nil {
+		return obol.CoinToCoinWithAmountResponse{}, err
+	}
+	ratesResponse.AveragePrice = finalRateHand.ToNormalUnit()
 	return ratesResponse, err
 }
 

@@ -4,7 +4,17 @@ import (
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/grupokindynos/obol/controllers"
+	"github.com/grupokindynos/obol/models"
 	"github.com/grupokindynos/obol/services"
+	"github.com/grupokindynos/obol/services/exchanges/binance"
+	"github.com/grupokindynos/obol/services/exchanges/bittrex"
+	"github.com/grupokindynos/obol/services/exchanges/crex24"
+	"github.com/grupokindynos/obol/services/exchanges/cryptobridge"
+	"github.com/grupokindynos/obol/services/exchanges/graviex"
+	"github.com/grupokindynos/obol/services/exchanges/kucoin"
+	"github.com/grupokindynos/obol/services/exchanges/novaexchange"
+	"github.com/grupokindynos/obol/services/exchanges/southxhcange"
+	"github.com/grupokindynos/obol/services/exchanges/stex"
 	_ "github.com/heroku/x/hmetrics/onload"
 	"github.com/joho/godotenv"
 	"github.com/ulule/limiter/v3"
@@ -41,6 +51,25 @@ func GetApp() *gin.Engine {
 
 // ApplyRoutes is used to attach all the routes to the API service.
 func ApplyRoutes(r *gin.Engine) {
+	rateService := &services.RateSevice{
+		FiatRates: &models.FiatRates{
+			Rates:       nil,
+			LastUpdated: time.Time{},
+		},
+		BittrexService:      bittrex.InitService(),
+		BinanceService:      binance.InitService(),
+		CryptoBridgeService: cryptobridge.InitService(),
+		Crex24Service:       crex24.InitService(),
+		StexService:         stex.InitService(),
+		SouthXChangeService: southxhcange.InitService(),
+		NovaExchangeService: novaexchange.InitService(),
+		KuCoinService:       kucoin.InitService(),
+		GraviexService:      graviex.InitService(),
+	}
+	err := rateService.LoadFiatRates()
+	if err != nil {
+		panic(err)
+	}
 	api := r.Group("/")
 	{
 		rate := limiter.Rate{
@@ -50,7 +79,6 @@ func ApplyRoutes(r *gin.Engine) {
 		store := memory.NewStore()
 		limiterMiddleware := mgin.NewMiddleware(limiter.New(store, rate))
 		api.Use(limiterMiddleware)
-		rateService := services.InitRateService()
 		rateCtrl := controllers.RateController{RateService: rateService, RatesCache: make(map[string]controllers.CoinRate)}
 		api.GET("simple/:coin", rateCtrl.GetCoinRates)
 		api.GET("complex/:fromcoin/:tocoin", rateCtrl.GetCoinRateFromCoinToCoin)

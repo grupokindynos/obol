@@ -4,12 +4,23 @@ import (
 	"encoding/json"
 	"github.com/gin-gonic/gin"
 	"github.com/grupokindynos/obol/config"
+	"github.com/grupokindynos/obol/models"
 	"github.com/grupokindynos/obol/services"
+	"github.com/grupokindynos/obol/services/exchanges/binance"
+	"github.com/grupokindynos/obol/services/exchanges/bittrex"
+	"github.com/grupokindynos/obol/services/exchanges/crex24"
+	"github.com/grupokindynos/obol/services/exchanges/cryptobridge"
+	"github.com/grupokindynos/obol/services/exchanges/graviex"
+	"github.com/grupokindynos/obol/services/exchanges/kucoin"
+	"github.com/grupokindynos/obol/services/exchanges/novaexchange"
+	"github.com/grupokindynos/obol/services/exchanges/southxhcange"
+	"github.com/grupokindynos/obol/services/exchanges/stex"
 	"github.com/joho/godotenv"
 	"github.com/stretchr/testify/assert"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 )
 
 func init() {
@@ -124,6 +135,25 @@ func TestRateController_GetCoinRatesFromCoinToCoinErrorSecondCoinInvalid(t *test
 }
 
 func loadRateCtrl() *RateController {
-	rc := RateController{RateService: services.InitRateService(), RatesCache: make(map[string]CoinRate)}
+	rs := &services.RateSevice{
+		FiatRates: &models.FiatRates{
+			Rates:       nil,
+			LastUpdated: time.Time{},
+		},
+		BittrexService:      bittrex.InitService(),
+		BinanceService:      binance.InitService(),
+		CryptoBridgeService: cryptobridge.InitService(),
+		Crex24Service:       crex24.InitService(),
+		StexService:         stex.InitService(),
+		SouthXChangeService: southxhcange.InitService(),
+		NovaExchangeService: novaexchange.InitService(),
+		KuCoinService:       kucoin.InitService(),
+		GraviexService:      graviex.InitService(),
+	}
+	err := rs.LoadFiatRates()
+	if err != nil {
+		panic(err)
+	}
+	rc := RateController{RateService: rs, RatesCache: make(map[string]CoinRate)}
 	return &rc
 }

@@ -25,11 +25,11 @@ type Rate struct {
 
 // FixerRates is the structure of the FixerRates response
 type FixerRates struct {
-	Success   bool   `json:"success"`
-	Timestamp int    `json:"timestamp"`
-	Base      string `json:"base"`
-	Date      string `json:"date"`
-	Error	  FixerError `json:"error"`
+	Success   bool       `json:"success"`
+	Timestamp int        `json:"timestamp"`
+	Base      string     `json:"base"`
+	Date      string     `json:"date"`
+	Error     FixerError `json:"error"`
 	Rates     struct {
 		AED float64 `json:"AED"`
 		AFN float64 `json:"AFN"`
@@ -203,7 +203,7 @@ type FixerRates struct {
 }
 
 type FixerError struct {
-	Code int `json:"code"`
+	Code int    `json:"code"`
 	Info string `json:"info"`
 }
 

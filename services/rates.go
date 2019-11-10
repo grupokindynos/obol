@@ -2,7 +2,6 @@ package services
 
 import (
 	"encoding/json"
-	"fmt"
 	"github.com/grupokindynos/common/coin-factory/coins"
 	"github.com/grupokindynos/common/obol"
 	"github.com/grupokindynos/obol/config"
@@ -60,7 +59,6 @@ type RateSevice struct {
 	NovaExchangeService *novaexchange.Service
 	KuCoinService       *kucoin.Service
 	GraviexService      *graviex.Service
-
 }
 
 // GetCoinRates is the main function to get the rates of a coin using the OpenRates structure
@@ -351,7 +349,7 @@ func (rs *RateSevice) GetBtcMxnRate() (float64, error) {
 // GetBtcRates will return the Bitcoin rates using the OpenRates structure
 func (rs *RateSevice) GetBtcRates() (rates []models.Rate, err error) {
 	if rs.FiatRates.LastUpdated.Unix()+UpdateFiatRatesTimeFrame < time.Now().Unix() {
-		err = rs.loadFiatRates()
+		err = rs.LoadFiatRates()
 		if err != nil {
 			return nil, err
 		}
@@ -372,8 +370,7 @@ func (rs *RateSevice) GetBtcRates() (rates []models.Rate, err error) {
 	return rates, err
 }
 
-func (rs *RateSevice) loadFiatRates() error {
-	fmt.Println(os.Getenv("FIXER_RATES_TOKEN"))
+func (rs *RateSevice) LoadFiatRates() error {
 	res, err := config.HttpClient.Get(config.FixerRatesURL + "?access_key=" + os.Getenv("FIXER_RATES_TOKEN"))
 	if err != nil {
 		return err
@@ -386,6 +383,9 @@ func (rs *RateSevice) loadFiatRates() error {
 	err = json.Unmarshal(contents, &fiatRates)
 	if err != nil {
 		return err
+	}
+	if fiatRates.Error.Code != 0 {
+		panic("unable to load fiat rates")
 	}
 	rateBytes, err := json.Marshal(fiatRates.Rates)
 	if err != nil {
@@ -401,31 +401,4 @@ func (rs *RateSevice) loadFiatRates() error {
 		LastUpdated: time.Now(),
 	}
 	return nil
-}
-
-// InitRateService is a safe to use function to init the rate service.
-func InitRateService() *RateSevice {
-	rs := &RateSevice{
-		FiatRates: &models.FiatRates{
-			Rates:       nil,
-			LastUpdated: time.Time{},
-		},
-		FiatRatesToken: os.Getenv("FIXER_RATES_TOKEN"),
-		BittrexService:      bittrex.InitService(),
-		BinanceService:      binance.InitService(),
-		CryptoBridgeService: cryptobridge.InitService(),
-		Crex24Service:       crex24.InitService(),
-		StexService:         stex.InitService(),
-		SouthXChangeService: southxhcange.InitService(),
-		NovaExchangeService: novaexchange.InitService(),
-		KuCoinService:       kucoin.InitService(),
-		GraviexService:      graviex.InitService(),
-	}
-	fmt.Println(rs)
-	fmt.Println(rs.FiatRatesToken)
-	err := rs.loadFiatRates()
-	if err != nil {
-		panic(err)
-	}
-	return rs
 }

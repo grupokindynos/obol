@@ -8,7 +8,8 @@ import (
 	"testing"
 )
 
-var rateService = InitRateService()
+
+var rateService =  InitRateService()
 
 func TestInitRateService(t *testing.T) {
 	assert.NotNil(t, rateService.FiatRates)
@@ -65,7 +66,7 @@ func TestRateSevice_GetCoinRates(t *testing.T) {
 func TestRateSevice_GetCoinToCoinRatesWithAmount(t *testing.T) {
 	polis, _ := coinfactory.GetCoin("polis")
 	dash, _ := coinfactory.GetCoin("dash")
-	rate, err := rateService.GetCoinToCoinRatesWithAmount(polis, dash, 100, "buy")
+	rate, err := rateService.GetCoinToCoinRatesWithAmount(polis, dash, 100.000, "sell")
 	assert.Nil(t, err)
 	assert.NotZero(t, rate)
 }

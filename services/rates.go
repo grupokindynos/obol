@@ -18,12 +18,17 @@ import (
 	"github.com/grupokindynos/obol/services/exchanges/southxhcange"
 	"github.com/grupokindynos/obol/services/exchanges/stex"
 	"github.com/grupokindynos/olympus-utils/amount"
+	"github.com/joho/godotenv"
 	"io/ioutil"
 	"math"
 	"os"
 	"strconv"
 	"time"
 )
+
+func init() {
+	_ = godotenv.Load("../.env")
+}
 
 const (
 	// UpdateFiatRatesTimeFrame is the time frame to update fiat rates
@@ -44,6 +49,7 @@ type BtcRates struct {
 // RateSevice is the main wrapper for all different exchanges and fiat rates data
 type RateSevice struct {
 	FiatRates           *models.FiatRates
+	FiatRatesToken      string
 	BtcRates            BtcRates
 	BittrexService      *bittrex.Service
 	BinanceService      *binance.Service
@@ -54,6 +60,7 @@ type RateSevice struct {
 	NovaExchangeService *novaexchange.Service
 	KuCoinService       *kucoin.Service
 	GraviexService      *graviex.Service
+
 }
 
 // GetCoinRates is the main function to get the rates of a coin using the OpenRates structure
@@ -180,7 +187,7 @@ func (rs *RateSevice) GetCoinToCoinRatesWithAmount(coinFrom *coins.Coin, coinTo 
 		orders = coinMarkets[orderWalls]
 	}
 	ratesResponse := obol.CoinToCoinWithAmountResponse{
-		Rates:        make(map[float64]float64),
+		Rates:        [][]float64{},
 		AveragePrice: 0,
 	}
 	// Looping against values on exchange to make an approachable rate based on the amount.
@@ -200,7 +207,9 @@ func (rs *RateSevice) GetCoinToCoinRatesWithAmount(coinFrom *coins.Coin, coinTo 
 				if err != nil {
 					return obol.CoinToCoinWithAmountResponse{}, err
 				}
-				ratesResponse.Rates[orderAmount.ToNormalUnit()] = orderPrice.ToNormalUnit()
+				var floatArray []float64
+				floatArray = append(floatArray, orderAmount.ToNormalUnit(), orderPrice.ToNormalUnit())
+				ratesResponse.Rates = append(ratesResponse.Rates, floatArray)
 			} else {
 				orderAmount, err := amount.NewAmount(order.Amount)
 				if err != nil {
@@ -210,7 +219,9 @@ func (rs *RateSevice) GetCoinToCoinRatesWithAmount(coinFrom *coins.Coin, coinTo 
 				if err != nil {
 					return obol.CoinToCoinWithAmountResponse{}, err
 				}
-				ratesResponse.Rates[orderAmount.ToNormalUnit()] = orderPrice.ToNormalUnit()
+				var floatArray []float64
+				floatArray = append(floatArray, orderAmount.ToNormalUnit(), orderPrice.ToNormalUnit())
+				ratesResponse.Rates = append(ratesResponse.Rates, floatArray)
 			}
 		} else {
 			countedAmount += order.Amount
@@ -225,7 +236,9 @@ func (rs *RateSevice) GetCoinToCoinRatesWithAmount(coinFrom *coins.Coin, coinTo 
 				if err != nil {
 					return obol.CoinToCoinWithAmountResponse{}, err
 				}
-				ratesResponse.Rates[orderAmount.ToNormalUnit()] = orderPrice.ToNormalUnit()
+				var floatArray []float64
+				floatArray = append(floatArray, orderAmount.ToNormalUnit(), orderPrice.ToNormalUnit())
+				ratesResponse.Rates = append(ratesResponse.Rates, floatArray)
 			} else {
 				orderAmount, err := amount.NewAmount(order.Amount)
 				if err != nil {
@@ -235,7 +248,9 @@ func (rs *RateSevice) GetCoinToCoinRatesWithAmount(coinFrom *coins.Coin, coinTo 
 				if err != nil {
 					return obol.CoinToCoinWithAmountResponse{}, err
 				}
-				ratesResponse.Rates[orderAmount.ToNormalUnit()] = orderPrice.ToNormalUnit()
+				var floatArray []float64
+				floatArray = append(floatArray, orderAmount.ToNormalUnit(), orderPrice.ToNormalUnit())
+				ratesResponse.Rates = append(ratesResponse.Rates, floatArray)
 			}
 		}
 		if countedAmount >= amountReq {
@@ -336,7 +351,10 @@ func (rs *RateSevice) GetBtcMxnRate() (float64, error) {
 // GetBtcRates will return the Bitcoin rates using the OpenRates structure
 func (rs *RateSevice) GetBtcRates() (rates []models.Rate, err error) {
 	if rs.FiatRates.LastUpdated.Unix()+UpdateFiatRatesTimeFrame < time.Now().Unix() {
-		rs.loadFiatRates()
+		err = rs.loadFiatRates()
+		if err != nil {
+			return nil, err
+		}
 	}
 	if rs.BtcRates.LastUpdated+UpdateBtcRatesTimeFrame > time.Now().Unix() {
 		return rs.BtcRates.Rates, nil
@@ -354,25 +372,35 @@ func (rs *RateSevice) GetBtcRates() (rates []models.Rate, err error) {
 	return rates, err
 }
 
-func (rs *RateSevice) loadFiatRates() {
+func (rs *RateSevice) loadFiatRates() error {
+	fmt.Println(os.Getenv("FIXER_RATES_TOKEN"))
 	res, err := config.HttpClient.Get(config.FixerRatesURL + "?access_key=" + os.Getenv("FIXER_RATES_TOKEN"))
 	if err != nil {
-		fmt.Println("unable to load fiat rates")
-	} else {
-		defer func() {
-			_ = res.Body.Close()
-		}()
-		contents, _ := ioutil.ReadAll(res.Body)
-		var fiatRates models.FixerRates
-		_ = json.Unmarshal(contents, &fiatRates)
-		rateBytes, _ := json.Marshal(fiatRates.Rates)
-		ratesMap := make(map[string]float64)
-		_ = json.Unmarshal(rateBytes, &ratesMap)
-		rs.FiatRates = &models.FiatRates{
-			Rates:       ratesMap,
-			LastUpdated: time.Now(),
-		}
+		return err
 	}
+	defer func() {
+		_ = res.Body.Close()
+	}()
+	contents, _ := ioutil.ReadAll(res.Body)
+	var fiatRates models.FixerRates
+	err = json.Unmarshal(contents, &fiatRates)
+	if err != nil {
+		return err
+	}
+	rateBytes, err := json.Marshal(fiatRates.Rates)
+	if err != nil {
+		return err
+	}
+	ratesMap := make(map[string]float64)
+	err = json.Unmarshal(rateBytes, &ratesMap)
+	if err != nil {
+		return err
+	}
+	rs.FiatRates = &models.FiatRates{
+		Rates:       ratesMap,
+		LastUpdated: time.Now(),
+	}
+	return nil
 }
 
 // InitRateService is a safe to use function to init the rate service.
@@ -382,6 +410,7 @@ func InitRateService() *RateSevice {
 			Rates:       nil,
 			LastUpdated: time.Time{},
 		},
+		FiatRatesToken: os.Getenv("FIXER_RATES_TOKEN"),
 		BittrexService:      bittrex.InitService(),
 		BinanceService:      binance.InitService(),
 		CryptoBridgeService: cryptobridge.InitService(),
@@ -392,6 +421,11 @@ func InitRateService() *RateSevice {
 		KuCoinService:       kucoin.InitService(),
 		GraviexService:      graviex.InitService(),
 	}
-	rs.loadFiatRates()
+	fmt.Println(rs)
+	fmt.Println(rs.FiatRatesToken)
+	err := rs.loadFiatRates()
+	if err != nil {
+		panic(err)
+	}
 	return rs
 }

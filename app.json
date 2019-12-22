@@ -1,7 +1,0 @@
-{
-  "name": "Obol",
-  "description": "Obol is a microservice API for multiple cryptocurrency rates",
-  "repository": "https://github.com/grupokindynos/obol",
-  "logo": "https://avatars0.githubusercontent.com/u/43501156?s=200&v=4",
-  "keywords": ["golang", "REST api", "gin", "cryptocurrencies", "bitcoin"]
-}

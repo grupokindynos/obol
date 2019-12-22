@@ -8,6 +8,7 @@ import (
 	"github.com/grupokindynos/obol/models"
 	"github.com/grupokindynos/obol/models/exchanges"
 	"github.com/grupokindynos/obol/services/exchanges/binance"
+	"github.com/grupokindynos/obol/services/exchanges/bitrue"
 	"github.com/grupokindynos/obol/services/exchanges/bittrex"
 	"github.com/grupokindynos/obol/services/exchanges/crex24"
 	"github.com/grupokindynos/obol/services/exchanges/cryptobridge"
@@ -59,6 +60,7 @@ type RateSevice struct {
 	NovaExchangeService *novaexchange.Service
 	KuCoinService       *kucoin.Service
 	GraviexService      *graviex.Service
+	BitrueService       *bitrue.Service
 }
 
 // GetCoinRates is the main function to get the rates of a coin using the OpenRates structure
@@ -277,6 +279,8 @@ func (rs *RateSevice) GetCoinOrdersWall(coin *coins.Coin) (orders map[string][]m
 		service = rs.BinanceService
 	case "bittrex":
 		service = rs.BittrexService
+	case "bitrue":
+		service = rs.BitrueService
 	case "cryptobridge":
 		service = rs.CryptoBridgeService
 	case "crex24":
@@ -303,6 +307,8 @@ func (rs *RateSevice) GetCoinOrdersWall(coin *coins.Coin) (orders map[string][]m
 			fallBackService = rs.BinanceService
 		case "bittrex":
 			fallBackService = rs.BittrexService
+		case "bitrue":
+			service = rs.BitrueService
 		case "cryptobridge":
 			fallBackService = rs.CryptoBridgeService
 		case "kucoin":

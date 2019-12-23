@@ -8,7 +8,6 @@ import (
 	"github.com/grupokindynos/obol/services/exchanges/binance"
 	"github.com/grupokindynos/obol/services/exchanges/bittrex"
 	"github.com/grupokindynos/obol/services/exchanges/crex24"
-	"github.com/grupokindynos/obol/services/exchanges/cryptobridge"
 	"github.com/grupokindynos/obol/services/exchanges/graviex"
 	"github.com/grupokindynos/obol/services/exchanges/kucoin"
 	"github.com/grupokindynos/obol/services/exchanges/novaexchange"
@@ -29,7 +28,6 @@ func TestInitRateService(t *testing.T) {
 	assert.NotNil(t, rateService.FiatRates)
 	assert.NotNil(t, rateService.BinanceService)
 	assert.NotNil(t, rateService.Crex24Service)
-	assert.NotNil(t, rateService.CryptoBridgeService)
 	assert.NotNil(t, rateService.StexService)
 	assert.IsType(t, &RateSevice{}, rateService)
 }
@@ -150,7 +148,6 @@ func loadRateService() *RateSevice {
 		},
 		BittrexService:      bittrex.InitService(),
 		BinanceService:      binance.InitService(),
-		CryptoBridgeService: cryptobridge.InitService(),
 		Crex24Service:       crex24.InitService(),
 		StexService:         stex.InitService(),
 		SouthXChangeService: southxhcange.InitService(),

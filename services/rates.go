@@ -10,7 +10,6 @@ import (
 	"github.com/grupokindynos/obol/services/exchanges/binance"
 	"github.com/grupokindynos/obol/services/exchanges/bittrex"
 	"github.com/grupokindynos/obol/services/exchanges/crex24"
-	"github.com/grupokindynos/obol/services/exchanges/cryptobridge"
 	"github.com/grupokindynos/obol/services/exchanges/graviex"
 	"github.com/grupokindynos/obol/services/exchanges/kucoin"
 	"github.com/grupokindynos/obol/services/exchanges/novaexchange"
@@ -52,7 +51,6 @@ type RateSevice struct {
 	BtcRates            BtcRates
 	BittrexService      *bittrex.Service
 	BinanceService      *binance.Service
-	CryptoBridgeService *cryptobridge.Service
 	Crex24Service       *crex24.Service
 	StexService         *stex.Service
 	SouthXChangeService *southxhcange.Service
@@ -277,8 +275,6 @@ func (rs *RateSevice) GetCoinOrdersWall(coin *coins.Coin) (orders map[string][]m
 		service = rs.BinanceService
 	case "bittrex":
 		service = rs.BittrexService
-	case "cryptobridge":
-		service = rs.CryptoBridgeService
 	case "crex24":
 		service = rs.Crex24Service
 	case "kucoin":
@@ -303,8 +299,6 @@ func (rs *RateSevice) GetCoinOrdersWall(coin *coins.Coin) (orders map[string][]m
 			fallBackService = rs.BinanceService
 		case "bittrex":
 			fallBackService = rs.BittrexService
-		case "cryptobridge":
-			fallBackService = rs.CryptoBridgeService
 		case "kucoin":
 			fallBackService = rs.KuCoinService
 		case "graviex":

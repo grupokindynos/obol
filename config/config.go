@@ -25,6 +25,6 @@ var (
 	ErrorRequestTimeout = errors.New("request timeout")
 	// HttpClient is a wrapper to properly timeout http.get calls
 	HttpClient = &http.Client{
-		Timeout: time.Second * 2,
+		Timeout: time.Second * 15,
 	}
 )

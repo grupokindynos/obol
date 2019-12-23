@@ -7,6 +7,7 @@ import (
 	"github.com/grupokindynos/obol/models"
 	"github.com/grupokindynos/obol/services"
 	"github.com/grupokindynos/obol/services/exchanges/binance"
+	"github.com/grupokindynos/obol/services/exchanges/bitrue"
 	"github.com/grupokindynos/obol/services/exchanges/bittrex"
 	"github.com/grupokindynos/obol/services/exchanges/crex24"
 	"github.com/grupokindynos/obol/services/exchanges/graviex"
@@ -147,6 +148,7 @@ func loadRateCtrl() *RateController {
 		NovaExchangeService: novaexchange.InitService(),
 		KuCoinService:       kucoin.InitService(),
 		GraviexService:      graviex.InitService(),
+		BitrueService:       bitrue.InitService(),
 	}
 	err := rs.LoadFiatRates()
 	if err != nil {

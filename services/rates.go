@@ -67,7 +67,7 @@ func (rs *RateSevice) GetCoinRates(coin *coins.Coin, buyWall bool) (rates []mode
 	if err != nil {
 		return rates, err
 	}
-	if coin.Tag == "BTC" {
+	if coin.Info.Tag == "BTC" {
 		return btcRates, nil
 	}
 	ratesWall, err := rs.GetCoinOrdersWall(coin)
@@ -86,13 +86,13 @@ func (rs *RateSevice) GetCoinRates(coin *coins.Coin, buyWall bool) (rates []mode
 			Name: singleRate.Name,
 		}
 		if singleRate.Code == "BTC" {
-			if coin.Tag == "USDC" || coin.Tag == "TUSD" || coin.Tag == "USDT" {
+			if coin.Info.Tag == "USDC" || coin.Info.Tag == "TUSD" || coin.Info.Tag == "USDT" {
 				rate.Rate = math.Floor((singleRate.Rate/orders[0].Price)*1e8) / 1e8
 			} else {
 				rate.Rate = math.Floor((orders[0].Price*singleRate.Rate)*1e8) / 1e8
 			}
 		} else {
-			if coin.Tag == "USDC" || coin.Tag == "TUSD" || coin.Tag == "USDT" {
+			if coin.Info.Tag == "USDC" || coin.Info.Tag == "TUSD" || coin.Info.Tag == "USDT" {
 				rate.Rate = math.Floor((orders[0].Price/singleRate.Rate)*10000) / 10000
 			} else {
 				rate.Rate = math.Floor((orders[0].Price*singleRate.Rate)*10000) / 10000
@@ -105,7 +105,7 @@ func (rs *RateSevice) GetCoinRates(coin *coins.Coin, buyWall bool) (rates []mode
 
 // GetCoinToCoinRates will return the rates from a crypto to a crypto using the exchanges data
 func (rs *RateSevice) GetCoinToCoinRates(coinFrom *coins.Coin, coinTo *coins.Coin) (rate float64, err error) {
-	if coinFrom.Tag == "BTC" {
+	if coinFrom.Info.Tag == "BTC" {
 		coinRates, err := rs.GetCoinRates(coinTo, true)
 		for _, rate := range coinRates {
 			if rate.Code == "BTC" {
@@ -113,7 +113,7 @@ func (rs *RateSevice) GetCoinToCoinRates(coinFrom *coins.Coin, coinTo *coins.Coi
 			}
 		}
 	}
-	if coinTo.Tag == "BTC" {
+	if coinTo.Info.Tag == "BTC" {
 		coinRates, err := rs.GetCoinRates(coinFrom, false)
 		for _, rate := range coinRates {
 			if rate.Code == "BTC" {
@@ -121,7 +121,7 @@ func (rs *RateSevice) GetCoinToCoinRates(coinFrom *coins.Coin, coinTo *coins.Coi
 			}
 		}
 	}
-	if coinFrom.Tag == coinTo.Tag {
+	if coinFrom.Info.Tag == coinTo.Info.Tag {
 		return rate, config.ErrorNoC2CWithSameCoin
 	}
 	coinFromRates, err := rs.GetCoinRates(coinFrom, false)
@@ -143,13 +143,13 @@ func (rs *RateSevice) GetCoinToCoinRates(coinFrom *coins.Coin, coinTo *coins.Coi
 
 // GetCoinToCoinRatesWithAmount is used to get the rates from crypto to crypto using a specified amount to convert
 func (rs *RateSevice) GetCoinToCoinRatesWithAmount(coinFrom *coins.Coin, coinTo *coins.Coin, amountReq float64, wall string) (rate obol.CoinToCoinWithAmountResponse, err error) {
-	if coinFrom.Tag == coinTo.Tag {
+	if coinFrom.Info.Tag == coinTo.Info.Tag {
 		return rate, config.ErrorNoC2CWithSameCoin
 	}
 	var coinMarkets map[string][]models.MarketOrder
 	var coinRates []models.Rate
 	// First get the orders wall from the coin we are converting
-	if coinFrom.Tag == "BTC" {
+	if coinFrom.Info.Tag == "BTC" {
 		coinMarkets, err = rs.GetCoinOrdersWall(coinTo)
 		if err != nil {
 			return obol.CoinToCoinWithAmountResponse{}, err
@@ -179,7 +179,7 @@ func (rs *RateSevice) GetCoinToCoinRatesWithAmount(coinFrom *coins.Coin, coinTo 
 	var countedAmount float64
 	var pricesSum float64
 	var orders []models.MarketOrder
-	if coinFrom.Tag == "BTC" {
+	if coinFrom.Info.Tag == "BTC" {
 		orders = coinMarkets["buy"]
 	} else {
 		orders = coinMarkets[orderWalls]
@@ -196,7 +196,7 @@ func (rs *RateSevice) GetCoinToCoinRatesWithAmount(coinFrom *coins.Coin, coinTo 
 			countedAmount += newAmount
 			percentage := newAmount / amountReq
 			pricesSum += order.Price * percentage
-			if coinFrom.Tag == "BTC" {
+			if coinFrom.Info.Tag == "BTC" {
 				orderAmount, err := amount.NewAmount(order.Amount)
 				if err != nil {
 					return obol.CoinToCoinWithAmountResponse{}, err
@@ -225,7 +225,7 @@ func (rs *RateSevice) GetCoinToCoinRatesWithAmount(coinFrom *coins.Coin, coinTo 
 			countedAmount += order.Amount
 			percentage := order.Amount / amountReq
 			pricesSum += order.Price * percentage
-			if coinFrom.Tag == "BTC" {
+			if coinFrom.Info.Tag == "BTC" {
 				orderAmount, err := amount.NewAmount(order.Amount)
 				if err != nil {
 					return obol.CoinToCoinWithAmountResponse{}, err
@@ -256,7 +256,7 @@ func (rs *RateSevice) GetCoinToCoinRatesWithAmount(coinFrom *coins.Coin, coinTo 
 		}
 	}
 	var finalRate float64
-	if coinFrom.Tag == "BTC" {
+	if coinFrom.Info.Tag == "BTC" {
 		finalRate = pricesSum
 	} else {
 		finalRate = coinToBTCRate / pricesSum
@@ -295,7 +295,7 @@ func (rs *RateSevice) GetCoinOrdersWall(coin *coins.Coin) (orders map[string][]m
 	if service == nil {
 		return nil, config.ErrorNoServiceForCoin
 	}
-	orders, err = service.CoinMarketOrders(coin.Tag)
+	orders, err = service.CoinMarketOrders(coin.Info.Tag)
 	if err != nil {
 		var fallBackService Exchange
 		switch coin.Rates.FallBackExchange {
@@ -321,7 +321,7 @@ func (rs *RateSevice) GetCoinOrdersWall(coin *coins.Coin) (orders map[string][]m
 		if fallBackService == nil {
 			return nil, config.ErrorNoFallBackServiceForCoin
 		}
-		fallBackOrders, err := fallBackService.CoinMarketOrders(coin.Tag)
+		fallBackOrders, err := fallBackService.CoinMarketOrders(coin.Info.Tag)
 		return fallBackOrders, err
 	}
 	return orders, err

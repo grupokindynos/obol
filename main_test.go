@@ -27,7 +27,7 @@ func TestSimpleRates(t *testing.T) {
 	Coins := coinfactory.Coins
 	App := GetApp()
 	for _, coin := range Coins {
-		w := performRequest(App, "GET", "/simple/"+coin.Tag)
+		w := performRequest(App, "GET", "/simple/"+coin.Info.Tag)
 		assert.Equal(t, http.StatusOK, w.Code)
 		var response map[string]interface{}
 		err := json.Unmarshal(w.Body.Bytes(), &response)
@@ -49,10 +49,10 @@ func TestComplexRates(t *testing.T) {
 	Coins := coinfactory.Coins
 	App := GetApp()
 	for _, coin := range Coins {
-		w := performRequest(App, "GET", "/complex/POLIS/"+coin.Tag)
+		w := performRequest(App, "GET", "/complex/POLIS/"+coin.Info.Tag)
 		var firstResponse map[string]interface{}
 		err := json.Unmarshal(w.Body.Bytes(), &firstResponse)
-		if coin.Tag == "POLIS" {
+		if coin.Info.Tag == "POLIS" {
 			assert.Equal(t, http.StatusInternalServerError, w.Code)
 			assert.Equal(t, config.ErrorNoC2CWithSameCoin.Error(), firstResponse["error"])
 			continue
@@ -65,7 +65,7 @@ func TestComplexRates(t *testing.T) {
 		firstResData := firstResponse["data"]
 		assert.NotZero(t, firstResData)
 
-		w2 := performRequest(App, "GET", "/complex/POLIS/"+coin.Tag+"?amount=1")
+		w2 := performRequest(App, "GET", "/complex/POLIS/"+coin.Info.Tag+"?amount=1")
 		assert.Equal(t, http.StatusOK, w2.Code)
 		var secondResponse map[string]interface{}
 		err = json.Unmarshal(w2.Body.Bytes(), &secondResponse)

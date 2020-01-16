@@ -35,19 +35,19 @@ func (rc *RateController) GetCoinRates(c *gin.Context) {
 		responses.GlobalResponseError(nil, err, c)
 		return
 	}
-	if rc.RatesCache[coinData.Tag].LastUpdated+RatesCacheTimeFrame > time.Now().Unix() {
-		responses.GlobalResponseError(rc.RatesCache[coinData.Tag].Rates, err, c)
+	if rc.RatesCache[coinData.Info.Tag].LastUpdated+RatesCacheTimeFrame > time.Now().Unix() {
+		responses.GlobalResponseError(rc.RatesCache[coinData.Info.Tag].Rates, err, c)
 		return
 	}
 	rates, err := rc.RateService.GetCoinRates(coinData, false)
 	sort.Slice(rates, func(i, j int) bool {
 		return rates[i].Code < rates[j].Code
 	})
-	rc.RatesCache[coinData.Tag] = CoinRate{
+	rc.RatesCache[coinData.Info.Tag] = CoinRate{
 		LastUpdated: time.Now().Unix(),
 		Rates:       rates,
 	}
-	responses.GlobalResponseError(rc.RatesCache[coinData.Tag].Rates, err, c)
+	responses.GlobalResponseError(rc.RatesCache[coinData.Info.Tag].Rates, err, c)
 	return
 }
 

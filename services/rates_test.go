@@ -50,7 +50,7 @@ func TestRateSevice_GetBtcMxnRate(t *testing.T) {
 func TestRateSevice_GetCoinOrdersWall(t *testing.T) {
 	rateService := loadRateService()
 	for _, coin := range coinfactory.Coins {
-		if coin.Tag == "BTC" {
+		if coin.Info.Tag == "BTC" {
 			continue
 		}
 		orders, err := rateService.GetCoinOrdersWall(coin)
@@ -134,7 +134,7 @@ func TestRateSevice_GetCoinToCoinRatesSameParams(t *testing.T) {
 
 func TestNoServiceForCoin(t *testing.T) {
 	rateService := loadRateService()
-	mockCoin := &coins.Coin{Tag: "FaKeCOIN", Name: "FakeCoin"}
+	mockCoin := &coins.Coin{Info: coins.CoinInfo{Tag: "FaKeCOIN", Name: "FakeCoin"}}
 	_, err := rateService.GetCoinOrdersWall(mockCoin)
 	assert.Equal(t, config.ErrorNoServiceForCoin, err)
 	_, err = rateService.GetCoinRates(mockCoin, false)

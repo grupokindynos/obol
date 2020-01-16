@@ -24,9 +24,8 @@ func performRequest(r http.Handler, method, path string) *httptest.ResponseRecor
 }
 
 func TestSimpleRates(t *testing.T) {
-	Coins := coinfactory.Coins
 	App := GetApp()
-	for _, coin := range Coins {
+	for _, coin := range coinfactory.Coins {
 		w := performRequest(App, "GET", "/simple/"+coin.Info.Tag)
 		assert.Equal(t, http.StatusOK, w.Code)
 		var response map[string]interface{}

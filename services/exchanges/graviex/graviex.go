@@ -31,22 +31,22 @@ func (s *Service) CoinMarketOrders(coin string) (orders map[string][]models.Mark
 	var buyOrders []models.MarketOrder
 	var sellOrders []models.MarketOrder
 	for _, order := range Response.Asks {
-		price, _ := strconv.ParseFloat(order.Price, 64)
-		amount, _ := strconv.ParseFloat(order.Volume, 64)
+		price, _ := strconv.ParseFloat(order[0], 64)
+		amount, _ := strconv.ParseFloat(order[1], 64)
 		newOrder := models.MarketOrder{
 			Price:  price,
 			Amount: amount,
 		}
-		sellOrders = append(sellOrders, newOrder)
+		buyOrders = append(sellOrders, newOrder)
 	}
 	for _, order := range Response.Bids {
-		price, _ := strconv.ParseFloat(order.Price, 64)
-		amount, _ := strconv.ParseFloat(order.Volume, 64)
+		price, _ := strconv.ParseFloat(order[0], 64)
+		amount, _ := strconv.ParseFloat(order[1], 64)
 		newOrder := models.MarketOrder{
 			Price:  price,
 			Amount: amount,
 		}
-		buyOrders = append(buyOrders, newOrder)
+		sellOrders = append(buyOrders, newOrder)
 	}
 	orders["buy"] = buyOrders
 	orders["sell"] = sellOrders
@@ -56,7 +56,7 @@ func (s *Service) CoinMarketOrders(coin string) (orders map[string][]models.Mark
 // InitService is used to safely start a new service reference.
 func InitService() *Service {
 	s := &Service{
-		MarketRateURL: "https://graviex.net/api/v3/order_book?market=",
+		MarketRateURL: "https://graviex.net:443//api/v3/depth.json?market=",
 	}
 	return s
 }

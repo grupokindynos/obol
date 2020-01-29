@@ -22,6 +22,7 @@ import (
 	"io/ioutil"
 	"math"
 	"os"
+	"sort"
 	"strconv"
 	"time"
 )
@@ -82,6 +83,10 @@ func (rs *RateSevice) GetCoinRates(coin *coins.Coin, buyWall bool) (rates []mode
 	} else {
 		orders = ratesWall["sell"]
 	}
+	// Make sure orders slice is ordered from lowest price.
+	sort.Slice(orders, func(i, j int) bool {
+		return orders[i].Price < orders[j].Price
+	})
 	for _, singleRate := range btcRates {
 		rate := models.Rate{
 			Code: singleRate.Code,

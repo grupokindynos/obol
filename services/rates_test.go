@@ -12,6 +12,7 @@ import (
 	"github.com/grupokindynos/obol/services/exchanges/graviex"
 	"github.com/grupokindynos/obol/services/exchanges/kucoin"
 	"github.com/grupokindynos/obol/services/exchanges/novaexchange"
+	"github.com/grupokindynos/obol/services/exchanges/probit"
 	"github.com/grupokindynos/obol/services/exchanges/southxhcange"
 	"github.com/grupokindynos/obol/services/exchanges/stex"
 	"github.com/joho/godotenv"
@@ -156,6 +157,7 @@ func loadRateService() *RateSevice {
 		KuCoinService:       kucoin.InitService(),
 		GraviexService:      graviex.InitService(),
 		BitrueService:       bitrue.InitService(),
+		ProbitService:       probit.InitService(),
 	}
 	err := rs.LoadFiatRates()
 	if err != nil {

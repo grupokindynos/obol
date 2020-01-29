@@ -13,6 +13,7 @@ import (
 	"github.com/grupokindynos/obol/services/exchanges/graviex"
 	"github.com/grupokindynos/obol/services/exchanges/kucoin"
 	"github.com/grupokindynos/obol/services/exchanges/novaexchange"
+	"github.com/grupokindynos/obol/services/exchanges/probit"
 	"github.com/grupokindynos/obol/services/exchanges/southxhcange"
 	"github.com/grupokindynos/obol/services/exchanges/stex"
 	_ "github.com/heroku/x/hmetrics/onload"
@@ -65,6 +66,7 @@ func ApplyRoutes(r *gin.Engine) {
 		KuCoinService:       kucoin.InitService(),
 		GraviexService:      graviex.InitService(),
 		BitrueService:       bitrue.InitService(),
+		ProbitService:       probit.InitService(),
 	}
 	err := rateService.LoadFiatRates()
 	if err != nil {

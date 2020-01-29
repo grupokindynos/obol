@@ -14,6 +14,7 @@ import (
 	"github.com/grupokindynos/obol/services/exchanges/graviex"
 	"github.com/grupokindynos/obol/services/exchanges/kucoin"
 	"github.com/grupokindynos/obol/services/exchanges/novaexchange"
+	"github.com/grupokindynos/obol/services/exchanges/probit"
 	"github.com/grupokindynos/obol/services/exchanges/southxhcange"
 	"github.com/grupokindynos/obol/services/exchanges/stex"
 	"github.com/grupokindynos/olympus-utils/amount"
@@ -59,6 +60,7 @@ type RateSevice struct {
 	KuCoinService       *kucoin.Service
 	GraviexService      *graviex.Service
 	BitrueService       *bitrue.Service
+	ProbitService       *probit.Service
 }
 
 // GetCoinRates is the main function to get the rates of a coin using the OpenRates structure
@@ -287,6 +289,8 @@ func (rs *RateSevice) GetCoinOrdersWall(coin *coins.Coin) (orders map[string][]m
 		service = rs.GraviexService
 	case "novaexchange":
 		service = rs.NovaExchangeService
+	case "probit":
+		service = rs.ProbitService
 	case "stex":
 		service = rs.StexService
 	case "southxchange":
@@ -315,6 +319,8 @@ func (rs *RateSevice) GetCoinOrdersWall(coin *coins.Coin) (orders map[string][]m
 			fallBackService = rs.NovaExchangeService
 		case "stex":
 			fallBackService = rs.StexService
+		case "probit":
+			fallBackService = rs.ProbitService
 		case "southxchange":
 			fallBackService = rs.SouthXChangeService
 		}

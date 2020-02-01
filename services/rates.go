@@ -145,7 +145,7 @@ func (rs *RateSevice) GetCoinToCoinRates(coinFrom *coins.Coin, coinTo *coins.Coi
 }
 
 // GetCoinToCoinRatesWithAmount is used to get the rates from crypto to crypto using a specified amount to convert
-func (rs *RateSevice) GetCoinToCoinRatesWithAmount(coinFrom *coins.Coin, coinTo *coins.Coin, amountReq float64, wall string) (obol.CoinToCoinWithAmountResponse, error) {
+func (rs *RateSevice) GetCoinToCoinRatesWithAmount(coinFrom *coins.Coin, coinTo *coins.Coin, amountReq float64) (obol.CoinToCoinWithAmountResponse, error) {
 	if coinFrom.Info.Tag == coinTo.Info.Tag {
 		return obol.CoinToCoinWithAmountResponse{}, config.ErrorNoC2CWithSameCoin
 	}
@@ -153,26 +153,30 @@ func (rs *RateSevice) GetCoinToCoinRatesWithAmount(coinFrom *coins.Coin, coinTo 
 	if amountRequested <= 0 {
 		return obol.CoinToCoinWithAmountResponse{}, errors.New("amount must be greater than 0")
 	}
-	if wall == "" {
-		if coinFrom.Info.Tag == "BTC" {
-			wall = "buy"
-		} else {
-			wall = "sell"
+	var coinWall []models.MarketOrder
+	if coinFrom.Info.Tag == "BTC" {
+		coinToWalls, err := rs.GetCoinOrdersWall(coinTo)
+		if err != nil {
+			return obol.CoinToCoinWithAmountResponse{}, err
 		}
+		coinWall = coinToWalls["buy"]
+	} else {
+		coinFromWalls, err := rs.GetCoinOrdersWall(coinFrom)
+		if err != nil {
+			return obol.CoinToCoinWithAmountResponse{}, err
+		}
+		coinWall = coinFromWalls["sell"]
 	}
-	var coinFromWall []models.MarketOrder
-	coinFromWalls, err := rs.GetCoinOrdersWall(coinFrom)
-	coinFromWall = coinFromWalls[wall]
 	amountParsed := amountRequested
 	btcData, err := coinfactory.GetCoin("BTC")
 	if err != nil {
 		return obol.CoinToCoinWithAmountResponse{}, err
 	}
-	if amountRequested <= coinFromWall[0].Amount {
+	if amountRequested <= coinWall[0].Amount {
 		if coinTo.Info.Tag == "BTC" {
 			return obol.CoinToCoinWithAmountResponse{
 				Rates:        nil,
-				AveragePrice: toFixed(coinFromWall[0].Price.ToNormalUnit(), 8),
+				AveragePrice: toFixed(coinWall[0].Price.ToNormalUnit(), 8),
 			}, nil
 		} else {
 			rateConv, err := rs.GetCoinToCoinRates(coinTo, btcData)
@@ -181,7 +185,7 @@ func (rs *RateSevice) GetCoinToCoinRatesWithAmount(coinFrom *coins.Coin, coinTo 
 			}
 			return obol.CoinToCoinWithAmountResponse{
 				Rates:        nil,
-				AveragePrice: toFixed(coinFromWall[0].Price.ToNormalUnit()/rateConv, 8),
+				AveragePrice: toFixed(coinWall[0].Price.ToNormalUnit()/rateConv, 8),
 			}, nil
 		}
 
@@ -189,7 +193,7 @@ func (rs *RateSevice) GetCoinToCoinRatesWithAmount(coinFrom *coins.Coin, coinTo 
 
 	var rates [][]float64
 	var percentageSum float64
-	for _, order := range coinFromWall {
+	for _, order := range coinWall {
 		percentage := toFixed(order.Amount/amountReq, 6)
 		percentageSum += percentage
 		var orderArr []float64
@@ -217,7 +221,7 @@ func (rs *RateSevice) GetCoinToCoinRatesWithAmount(coinFrom *coins.Coin, coinTo 
 		}
 	}
 	var rate obol.CoinToCoinWithAmountResponse
-	if coinTo.Info.Tag == "BTC" {
+	if coinTo.Info.Tag == "BTC" || coinFrom.Info.Tag == "BTC" {
 		rate.AveragePrice = toFixed(AvrPrice, 8)
 	} else {
 		rateConv, err := rs.GetCoinToCoinRates(coinTo, btcData)

@@ -7,7 +7,6 @@ import (
 	"github.com/grupokindynos/obol/config"
 	"github.com/grupokindynos/obol/models"
 	"github.com/grupokindynos/obol/services"
-	"github.com/grupokindynos/olympus-utils/amount"
 	"sort"
 	"strconv"
 	"time"
@@ -73,13 +72,8 @@ func (rc *RateController) GetCoinRateFromCoinToCoin(c *gin.Context) {
 			responses.GlobalResponseError(nil, config.ErrorInvalidAmountOnC2C, c)
 			return
 		}
-		amountHand, err := amount.NewAmount(amountNum)
-		if err != nil {
-			responses.GlobalResponseError(nil, config.ErrorInvalidAmountOnC2C, c)
-			return
-		}
-		rates, err := rc.RateService.GetCoinToCoinRatesWithAmount(fromCoinData, toCoinData, amountHand.ToNormalUnit(), wall)
-		responses.GlobalResponseError(rates, nil, c)
+		rates, err := rc.RateService.GetCoinToCoinRatesWithAmount(fromCoinData, toCoinData, amountNum, wall)
+		responses.GlobalResponseError(rates, err, c)
 		return
 	}
 	rates, err := rc.RateService.GetCoinToCoinRates(fromCoinData, toCoinData)

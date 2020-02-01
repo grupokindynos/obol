@@ -108,40 +108,38 @@ func (rs *RateSevice) GetCoinRates(coin *coins.Coin, buyWall bool) (rates []mode
 
 // GetCoinToCoinRates will return the rates from a crypto to a crypto using the exchanges data
 func (rs *RateSevice) GetCoinToCoinRates(coinFrom *coins.Coin, coinTo *coins.Coin) (rate float64, err error) {
-	if coinFrom.Info.Tag == "BTC" {
-		coinRates, err := rs.GetCoinRates(coinTo, true)
+	if coinFrom.Info.Tag == coinTo.Info.Tag {
+		return rate, config.ErrorNoC2CWithSameCoin
+	}
+	if coinTo.Info.Tag == "BTC" {
+		coinRates, err := rs.GetCoinRates(coinFrom, false)
 		for _, rate := range coinRates {
 			if rate.Code == "BTC" {
 				return rate.Rate, err
 			}
 		}
 	}
-	if coinTo.Info.Tag == "BTC" {
-		coinRates, err := rs.GetCoinRates(coinFrom, false)
-		for _, rate := range coinRates {
-			if rate.Code == "BTC" {
-				return 1 / rate.Rate, err
-			}
-		}
-	}
-	if coinFrom.Info.Tag == coinTo.Info.Tag {
-		return rate, config.ErrorNoC2CWithSameCoin
-	}
 	coinFromRates, err := rs.GetCoinRates(coinFrom, false)
+	if err != nil {
+		return 0, err
+	}
 	coinToRates, err := rs.GetCoinRates(coinTo, false)
-	var coinFromCommonRate float64
-	var coinToCommonRate float64
+	if err != nil {
+		return 0, err
+	}
+	var coinFromUSDRate float64
 	for _, rate := range coinFromRates {
-		if rate.Code == "BTC" {
-			coinFromCommonRate = rate.Rate
+		if rate.Code == "USD" {
+			coinFromUSDRate = rate.Rate
 		}
 	}
+	var coinToUSDRate float64
 	for _, rate := range coinToRates {
-		if rate.Code == "BTC" {
-			coinToCommonRate = rate.Rate
+		if rate.Code == "USD" {
+			coinToUSDRate = rate.Rate
 		}
 	}
-	return coinToCommonRate / coinFromCommonRate, err
+	return toFixed(coinFromUSDRate / coinToUSDRate, 6), nil
 }
 
 // GetCoinToCoinRatesWithAmount is used to get the rates from crypto to crypto using a specified amount to convert

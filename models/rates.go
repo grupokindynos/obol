@@ -1,13 +1,14 @@
 package models
 
 import (
+	"github.com/olympus-protocol/ogen/utils/amount"
 	"time"
 )
 
 // MarketOrder is just a simple struct to homologue the exchange responses
 type MarketOrder struct {
-	Amount float64 `json:"amount"`
-	Price  float64 `json:"price"`
+	Amount float64           `json:"amount"`
+	Price  amount.AmountType `json:"price"`
 }
 
 // FiatRates is the struct to handle internally the OpenRate response

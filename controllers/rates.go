@@ -8,7 +8,6 @@ import (
 	"github.com/grupokindynos/obol/models"
 	"github.com/grupokindynos/obol/services"
 	"github.com/grupokindynos/olympus-utils/amount"
-	"math"
 	"sort"
 	"strconv"
 	"time"
@@ -84,7 +83,6 @@ func (rc *RateController) GetCoinRateFromCoinToCoin(c *gin.Context) {
 		return
 	}
 	rates, err := rc.RateService.GetCoinToCoinRates(fromCoinData, toCoinData)
-	trunk := math.Floor(rates*1e8) / 1e8
-	responses.GlobalResponseError(trunk, err, c)
+	responses.GlobalResponseError(rates, err, c)
 	return
 }

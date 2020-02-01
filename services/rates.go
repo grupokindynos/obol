@@ -14,15 +14,13 @@ import (
 	"github.com/grupokindynos/obol/services/exchanges/graviex"
 	"github.com/grupokindynos/obol/services/exchanges/kucoin"
 	"github.com/grupokindynos/obol/services/exchanges/novaexchange"
-	"github.com/grupokindynos/obol/services/exchanges/probit"
 	"github.com/grupokindynos/obol/services/exchanges/southxhcange"
 	"github.com/grupokindynos/obol/services/exchanges/stex"
-	"github.com/grupokindynos/olympus-utils/amount"
 	"github.com/joho/godotenv"
+	"github.com/olympus-protocol/ogen/utils/amount"
 	"io/ioutil"
 	"math"
 	"os"
-	"sort"
 	"strconv"
 	"time"
 )
@@ -61,7 +59,6 @@ type RateSevice struct {
 	KuCoinService       *kucoin.Service
 	GraviexService      *graviex.Service
 	BitrueService       *bitrue.Service
-	ProbitService       *probit.Service
 }
 
 // GetCoinRates is the main function to get the rates of a coin using the OpenRates structure
@@ -83,27 +80,26 @@ func (rs *RateSevice) GetCoinRates(coin *coins.Coin, buyWall bool) (rates []mode
 	} else {
 		orders = ratesWall["sell"]
 	}
-	// Make sure orders slice is ordered from lowest price.
-	sort.Slice(orders, func(i, j int) bool {
-		return orders[i].Price < orders[j].Price
-	})
+	orderPrice := orders[0].Price
 	for _, singleRate := range btcRates {
+		singleRateConv, err := amount.NewAmount(singleRate.Rate)
+		if err != nil {
+			return nil, err
+		}
 		rate := models.Rate{
 			Code: singleRate.Code,
 			Name: singleRate.Name,
 		}
-		if singleRate.Code == "BTC" {
-			if coin.Info.Tag == "USDC" || coin.Info.Tag == "TUSD" || coin.Info.Tag == "USDT" {
-				rate.Rate = math.Floor((singleRate.Rate/orders[0].Price)*1e8) / 1e8
-			} else {
-				rate.Rate = math.Floor((orders[0].Price*singleRate.Rate)*1e8) / 1e8
-			}
+		var rateNum float64
+		if coin.Info.Tag == "USDC" || coin.Info.Tag == "TUSD" || coin.Info.Tag == "USDT" {
+			rateNum = singleRateConv.ToNormalUnit() / orderPrice.ToNormalUnit()
 		} else {
-			if coin.Info.Tag == "USDC" || coin.Info.Tag == "TUSD" || coin.Info.Tag == "USDT" {
-				rate.Rate = math.Floor((orders[0].Price/singleRate.Rate)*10000) / 10000
-			} else {
-				rate.Rate = math.Floor((orders[0].Price*singleRate.Rate)*10000) / 10000
-			}
+			rateNum = orderPrice.ToNormalUnit() * singleRateConv.ToNormalUnit()
+		}
+		if singleRate.Code == "BTC" {
+			rate.Rate = toFixed(rateNum, 8)
+		} else {
+			rate.Rate = toFixed(rateNum, 4)
 		}
 		rates = append(rates, rate)
 	}
@@ -184,7 +180,7 @@ func (rs *RateSevice) GetCoinToCoinRatesWithAmount(coinFrom *coins.Coin, coinTo 
 	}
 	// Init vars for loop
 	var countedAmount float64
-	var pricesSum float64
+	var pricesSum amount.AmountType
 	var orders []models.MarketOrder
 	if coinFrom.Info.Tag == "BTC" {
 		orders = coinMarkets["buy"]
@@ -201,60 +197,50 @@ func (rs *RateSevice) GetCoinToCoinRatesWithAmount(coinFrom *coins.Coin, coinTo 
 			diff := math.Abs((countedAmount + order.Amount) - amountReq)
 			newAmount := order.Amount - diff
 			countedAmount += newAmount
-			percentage := newAmount / amountReq
+			percentage, err := amount.NewAmount(newAmount / amountReq)
+			if err != nil {
+				return obol.CoinToCoinWithAmountResponse{}, err
+			}
 			pricesSum += order.Price * percentage
 			if coinFrom.Info.Tag == "BTC" {
 				orderAmount, err := amount.NewAmount(order.Amount)
 				if err != nil {
 					return obol.CoinToCoinWithAmountResponse{}, err
 				}
-				orderPrice, err := amount.NewAmount(order.Price)
-				if err != nil {
-					return obol.CoinToCoinWithAmountResponse{}, err
-				}
 				var floatArray []float64
-				floatArray = append(floatArray, orderAmount.ToNormalUnit(), orderPrice.ToNormalUnit())
+				floatArray = append(floatArray, orderAmount.ToNormalUnit(), order.Price.ToNormalUnit())
 				ratesResponse.Rates = append(ratesResponse.Rates, floatArray)
 			} else {
 				orderAmount, err := amount.NewAmount(order.Amount)
 				if err != nil {
 					return obol.CoinToCoinWithAmountResponse{}, err
 				}
-				orderPrice, err := amount.NewAmount(coinToBTCRate / order.Price)
-				if err != nil {
-					return obol.CoinToCoinWithAmountResponse{}, err
-				}
 				var floatArray []float64
-				floatArray = append(floatArray, orderAmount.ToNormalUnit(), orderPrice.ToNormalUnit())
+				floatArray = append(floatArray, orderAmount.ToNormalUnit(), coinToBTCRate/order.Price.ToNormalUnit())
 				ratesResponse.Rates = append(ratesResponse.Rates, floatArray)
 			}
 		} else {
 			countedAmount += order.Amount
-			percentage := order.Amount / amountReq
+			percentage, err := amount.NewAmount(order.Amount / amountReq)
+			if err != nil {
+				return obol.CoinToCoinWithAmountResponse{}, err
+			}
 			pricesSum += order.Price * percentage
 			if coinFrom.Info.Tag == "BTC" {
 				orderAmount, err := amount.NewAmount(order.Amount)
 				if err != nil {
 					return obol.CoinToCoinWithAmountResponse{}, err
 				}
-				orderPrice, err := amount.NewAmount(order.Price)
-				if err != nil {
-					return obol.CoinToCoinWithAmountResponse{}, err
-				}
 				var floatArray []float64
-				floatArray = append(floatArray, orderAmount.ToNormalUnit(), orderPrice.ToNormalUnit())
+				floatArray = append(floatArray, orderAmount.ToNormalUnit(), order.Price.ToNormalUnit())
 				ratesResponse.Rates = append(ratesResponse.Rates, floatArray)
 			} else {
 				orderAmount, err := amount.NewAmount(order.Amount)
 				if err != nil {
 					return obol.CoinToCoinWithAmountResponse{}, err
 				}
-				orderPrice, err := amount.NewAmount(coinToBTCRate / order.Price)
-				if err != nil {
-					return obol.CoinToCoinWithAmountResponse{}, err
-				}
 				var floatArray []float64
-				floatArray = append(floatArray, orderAmount.ToNormalUnit(), orderPrice.ToNormalUnit())
+				floatArray = append(floatArray, orderAmount.ToNormalUnit(), coinToBTCRate/order.Price.ToNormalUnit())
 				ratesResponse.Rates = append(ratesResponse.Rates, floatArray)
 			}
 		}
@@ -264,15 +250,11 @@ func (rs *RateSevice) GetCoinToCoinRatesWithAmount(coinFrom *coins.Coin, coinTo 
 	}
 	var finalRate float64
 	if coinFrom.Info.Tag == "BTC" {
-		finalRate = pricesSum
+		finalRate = pricesSum.ToNormalUnit()
 	} else {
-		finalRate = coinToBTCRate / pricesSum
+		finalRate = coinToBTCRate / pricesSum.ToNormalUnit()
 	}
-	finalRateHand, err := amount.NewAmount(finalRate)
-	if err != nil {
-		return obol.CoinToCoinWithAmountResponse{}, err
-	}
-	ratesResponse.AveragePrice = finalRateHand.ToNormalUnit()
+	ratesResponse.AveragePrice = finalRate
 	return ratesResponse, err
 }
 
@@ -294,8 +276,6 @@ func (rs *RateSevice) GetCoinOrdersWall(coin *coins.Coin) (orders map[string][]m
 		service = rs.GraviexService
 	case "novaexchange":
 		service = rs.NovaExchangeService
-	case "probit":
-		service = rs.ProbitService
 	case "stex":
 		service = rs.StexService
 	case "southxchange":
@@ -324,8 +304,6 @@ func (rs *RateSevice) GetCoinOrdersWall(coin *coins.Coin) (orders map[string][]m
 			fallBackService = rs.NovaExchangeService
 		case "stex":
 			fallBackService = rs.StexService
-		case "probit":
-			fallBackService = rs.ProbitService
 		case "southxchange":
 			fallBackService = rs.SouthXChangeService
 		}
@@ -338,9 +316,9 @@ func (rs *RateSevice) GetCoinOrdersWall(coin *coins.Coin) (orders map[string][]m
 	return orders, err
 }
 
-// GetBtcMxnRate will return the price of BTC on MXN
-func (rs *RateSevice) GetBtcMxnRate() (float64, error) {
-	res, err := config.HttpClient.Get("https://api.bitso.com/v3/ticker/?book=btc_mxn")
+// GetBtcEURRate will return the price of BTC on EUR
+func (rs *RateSevice) GetBtcEURRate() (float64, error) {
+	res, err := config.HttpClient.Get("https://bitstamp.net/api/v2/ticker/btceur")
 	if err != nil {
 		return 0, config.ErrorRequestTimeout
 	}
@@ -348,13 +326,16 @@ func (rs *RateSevice) GetBtcMxnRate() (float64, error) {
 		_ = res.Body.Close()
 	}()
 	contents, _ := ioutil.ReadAll(res.Body)
-	var bitsoRates exchanges.BitsoRates
-	err = json.Unmarshal(contents, &bitsoRates)
+	var rate exchanges.BitstampRate
+	err = json.Unmarshal(contents, &rate)
 	if err != nil {
 		return 0, err
 	}
-	rate, err := strconv.ParseFloat(bitsoRates.Payload.Last, 64)
-	return rate, err
+	rateNum, err := strconv.ParseFloat(rate.Last, 64)
+	if err != nil {
+		return 0, err
+	}
+	return rateNum, err
 }
 
 // GetBtcRates will return the Bitcoin rates using the OpenRates structure
@@ -368,13 +349,16 @@ func (rs *RateSevice) GetBtcRates() (rates []models.Rate, err error) {
 	if rs.BtcRates.LastUpdated+UpdateBtcRatesTimeFrame > time.Now().Unix() {
 		return rs.BtcRates.Rates, nil
 	}
-	btcMxnRate, err := rs.GetBtcMxnRate()
-	newRate := btcMxnRate / rs.FiatRates.Rates["MXN"]
+	btcRate, err := rs.GetBtcEURRate()
 	for key, rate := range rs.FiatRates.Rates {
+		newRate, err := amount.NewAmount(rate * btcRate)
+		if err != nil {
+			return nil, err
+		}
 		rate := models.Rate{
 			Code: key,
 			Name: models.FixerRatesNames[key],
-			Rate: rate * newRate,
+			Rate: newRate.ToNormalUnit(),
 		}
 		rates = append(rates, rate)
 	}
@@ -412,4 +396,13 @@ func (rs *RateSevice) LoadFiatRates() error {
 		LastUpdated: time.Now(),
 	}
 	return nil
+}
+
+func round(num float64) int {
+	return int(num + math.Copysign(0.5, num))
+}
+
+func toFixed(num float64, precision int) float64 {
+	output := math.Pow(10, float64(precision))
+	return float64(round(num*output)) / output
 }

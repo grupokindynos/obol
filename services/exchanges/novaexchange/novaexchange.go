@@ -5,6 +5,7 @@ import (
 	"github.com/grupokindynos/obol/config"
 	"github.com/grupokindynos/obol/models"
 	"github.com/grupokindynos/obol/models/exchanges"
+	"github.com/olympus-protocol/ogen/utils/amount"
 	"io/ioutil"
 	"strconv"
 	"strings"
@@ -33,18 +34,26 @@ func (s *Service) CoinMarketOrders(coin string) (orders map[string][]models.Mark
 	for _, order := range Response.Items {
 		if order.Tradetype == "BUY" {
 			price, _ := strconv.ParseFloat(order.Price, 64)
-			amount, _ := strconv.ParseFloat(order.Amount, 64)
+			priceConv, err := amount.NewAmount(price)
+			if err != nil {
+				return nil, err
+			}
+			am, _ := strconv.ParseFloat(order.Amount, 64)
 			newOrder := models.MarketOrder{
-				Price:  price,
-				Amount: amount,
+				Price:  priceConv,
+				Amount: am,
 			}
 			buyOrders = append(buyOrders, newOrder)
 		} else if order.Tradetype == "SELL" {
 			price, _ := strconv.ParseFloat(order.Price, 64)
-			amount, _ := strconv.ParseFloat(order.Amount, 64)
+			priceConv, err := amount.NewAmount(price)
+			if err != nil {
+				return nil, err
+			}
+			am, _ := strconv.ParseFloat(order.Amount, 64)
 			newOrder := models.MarketOrder{
-				Price:  price,
-				Amount: amount,
+				Price:  priceConv,
+				Amount: am,
 			}
 			sellOrders = append(sellOrders, newOrder)
 		}

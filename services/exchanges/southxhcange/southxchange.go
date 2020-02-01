@@ -5,6 +5,7 @@ import (
 	"github.com/grupokindynos/obol/config"
 	"github.com/grupokindynos/obol/models"
 	"github.com/grupokindynos/obol/models/exchanges"
+	"github.com/olympus-protocol/ogen/utils/amount"
 	"io/ioutil"
 	"strings"
 )
@@ -31,19 +32,27 @@ func (s *Service) CoinMarketOrders(coin string) (orders map[string][]models.Mark
 	var sellOrders []models.MarketOrder
 	for _, order := range Response.BuyOrders {
 		price := order.Price
-		amount := order.Amount
+		am := order.Amount
+		priceConv, err := amount.NewAmount(price)
+		if err != nil {
+			return nil, err
+		}
 		newOrder := models.MarketOrder{
-			Price:  price,
-			Amount: amount,
+			Price:  priceConv,
+			Amount: am,
 		}
 		sellOrders = append(sellOrders, newOrder)
 	}
 	for _, order := range Response.SellOrders {
 		price := order.Price
-		amount := order.Amount
+		priceConv, err := amount.NewAmount(price)
+		if err != nil {
+			return nil, err
+		}
+		am := order.Amount
 		newOrder := models.MarketOrder{
-			Price:  price,
-			Amount: amount,
+			Price:  priceConv,
+			Amount: am,
 		}
 		buyOrders = append(buyOrders, newOrder)
 	}

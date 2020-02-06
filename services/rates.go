@@ -144,6 +144,19 @@ func (rs *RateSevice) GetCoinToCoinRates(coinFrom *coins.Coin, coinTo *coins.Coi
 	return toFixed(coinFromUSDRate/coinToUSDRate, 6), nil
 }
 
+func (rs *RateSevice) GetCoinLiquidity(coin *coins.Coin) (float64, error) {
+	coinWalls, err := rs.GetCoinOrdersWall(coin)
+	if err != nil {
+		return 0, err
+	}
+	orderWall := coinWalls["sell"]
+	var liquidity float64
+	for _, order := range orderWall {
+		liquidity += order.Amount * order.Price.ToNormalUnit()
+	}
+	return toFixed(liquidity, 8), err
+}
+
 // GetCoinToCoinRatesWithAmount is used to get the rates from crypto to crypto using a specified amount to convert
 func (rs *RateSevice) GetCoinToCoinRatesWithAmount(coinFrom *coins.Coin, coinTo *coins.Coin, amountReq float64) (obol.CoinToCoinWithAmountResponse, error) {
 	if coinFrom.Info.Tag == coinTo.Info.Tag {

@@ -82,6 +82,8 @@ func ApplyRoutes(r *gin.Engine) {
 		rateCtrl := controllers.RateController{RateService: rateService, RatesCache: make(map[string]controllers.CoinRate)}
 		api.GET("simple/:coin", rateCtrl.GetCoinRates)
 		api.GET("complex/:fromcoin/:tocoin", rateCtrl.GetCoinRateFromCoinToCoin)
+		api.GET("liquidity/:coin", rateCtrl.GetCoinLiquidity)
+
 	}
 	r.NoRoute(func(c *gin.Context) {
 		c.String(http.StatusNotFound, "Not Found")

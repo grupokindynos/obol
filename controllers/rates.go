@@ -79,3 +79,20 @@ func (rc *RateController) GetCoinRateFromCoinToCoin(c *gin.Context) {
 	responses.GlobalResponseError(rates, err, c)
 	return
 }
+
+// GetCoinLiquidity will return the liquidity available for the selected coin.
+func (rc *RateController) GetCoinLiquidity(c *gin.Context) {
+	coin := c.Param("coin")
+	coinConfig, err := coinfactory.GetCoin(coin)
+	if err != nil {
+		responses.GlobalResponseError(nil, err, c)
+		return
+	}
+	liquidity, err := rc.RateService.GetCoinLiquidity(coinConfig)
+	if err != nil {
+		responses.GlobalResponseError(nil, err, c)
+		return
+	}
+	responses.GlobalResponseError(liquidity, err, c)
+	return
+}

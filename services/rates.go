@@ -164,7 +164,7 @@ func (rs *RateSevice) GetCoinLiquidity(coin *coins.Coin) (float64, error) {
 			btcUSDRate = rate.Rate
 		}
 	}
-	return toFixed(liquidity * btcUSDRate, 8), err
+	return toFixed(liquidity*btcUSDRate, 8), err
 }
 
 // GetCoinToCoinRatesWithAmount is used to get the rates from crypto to crypto using a specified amount to convert

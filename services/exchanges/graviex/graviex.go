@@ -42,7 +42,7 @@ func (s *Service) CoinMarketOrders(coin string) (orders map[string][]models.Mark
 			Price:  priceConv,
 			Amount: am,
 		}
-		buyOrders = append(sellOrders, newOrder)
+		buyOrders = append(buyOrders, newOrder)
 	}
 	for _, order := range Response.Bids {
 		price, _ := strconv.ParseFloat(order[0], 64)
@@ -55,7 +55,7 @@ func (s *Service) CoinMarketOrders(coin string) (orders map[string][]models.Mark
 			Price:  priceConv,
 			Amount: am,
 		}
-		sellOrders = append(buyOrders, newOrder)
+		sellOrders = append(sellOrders, newOrder)
 	}
 	orders["buy"] = buyOrders
 	orders["sell"] = sellOrders

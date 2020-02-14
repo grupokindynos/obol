@@ -202,13 +202,13 @@ func (rs *RateSevice) GetCoinToCoinRatesWithAmount(coinFrom *coins.Coin, coinTo 
 				AveragePrice: toFixed(coinWall[0].Price.ToNormalUnit(), 8),
 			}, nil
 		} else {
-			rateConv, err := rs.GetCoinToCoinRates(coinTo, btcData)
+			//rateConv, err := rs.GetCoinToCoinRates(btcData, coinTo)
 			if err != nil {
 				return obol.CoinToCoinWithAmountResponse{}, err
 			}
 			return obol.CoinToCoinWithAmountResponse{
 				Rates:        nil,
-				AveragePrice: toFixed(coinWall[0].Price.ToNormalUnit()/rateConv, 8),
+				AveragePrice: toFixed(coinWall[0].Price.ToNormalUnit(), 8),
 			}, nil
 		}
 

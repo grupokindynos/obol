@@ -76,6 +76,8 @@ github.com/grpc-ecosystem/go-grpc-middleware v1.0.0/go.mod h1:FiyG127CGDf3tlThmg
 github.com/grpc-ecosystem/grpc-gateway v1.9.6/go.mod h1:vNeuVxBJEsws4ogUvrchl83t/GYV9WGTSLVdBhOQFDY=
 github.com/grupokindynos/common v0.0.0-20200214153659-7b7378394168 h1:C+YoJf7mt5N4F6H3USKnSOab1vVD9BW/JaT7hsKi/mE=
 github.com/grupokindynos/common v0.0.0-20200214153659-7b7378394168/go.mod h1:GuHK2gA5yF3hD5PjguSHuTf8f2xyEmdxoiFOFviyhng=
+github.com/grupokindynos/common v0.0.0-20200214171818-2b4b93508523 h1:ZMDbTC0hx4DkIbz2/94J9AhgqEmkd7Tzu7uhyH3hRW8=
+github.com/grupokindynos/common v0.0.0-20200214171818-2b4b93508523/go.mod h1:GuHK2gA5yF3hD5PjguSHuTf8f2xyEmdxoiFOFviyhng=
 github.com/hashicorp/hcl v1.0.0/go.mod h1:E5yfLk+7swimpb2L/Alb/PJmXilQ/rhwaUYs4T20WEQ=
 github.com/heroku/heroku-go/v5 v5.1.0/go.mod h1:d+1QrZyjbnQJG1f8xIoVvMQRFLt3XRVZOdlm26Sr73U=
 github.com/heroku/rollrus v0.1.1/go.mod h1:B3MwEcr9nmf4xj0Sr5l9eSht7wLKMa1C+9ajgAU79ek=

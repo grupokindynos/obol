@@ -198,6 +198,7 @@ func (rs *RateSevice) GetCoinToCoinRatesWithAmount(coinFrom *coins.Coin, coinTo 
 	if amountRequested <= coinWall[0].Amount {
 		return obol.CoinToCoinWithAmountResponse{
 			AveragePrice: toFixed(coinWall[0].Price.ToNormalUnit(), 8),
+			Amount: coinWall[0].Price.ToNormalUnit() * amountRequested,
 		}, nil
 	}
 
@@ -233,12 +234,14 @@ func (rs *RateSevice) GetCoinToCoinRatesWithAmount(coinFrom *coins.Coin, coinTo 
 	var rate obol.CoinToCoinWithAmountResponse
 	if coinTo.Info.Tag == "BTC" || coinFrom.Info.Tag == "BTC" {
 		rate.AveragePrice = toFixed(AvrPrice, 8)
+		rate.Amount = rate.AveragePrice * amountRequested
 	} else {
 		rateConv, err := rs.GetCoinToCoinRates(coinTo, btcData)
 		if err != nil {
 			return rate, err
 		}
 		rate.AveragePrice = toFixed(AvrPrice/rateConv, 8)
+		rate.Amount = rate.AveragePrice * amountRequested
 	}
 	return rate, err
 }

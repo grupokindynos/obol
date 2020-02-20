@@ -3,6 +3,12 @@ package services
 import (
 	"encoding/json"
 	"errors"
+	"io/ioutil"
+	"math"
+	"os"
+	"strconv"
+	"time"
+
 	coinfactory "github.com/grupokindynos/common/coin-factory"
 	"github.com/grupokindynos/common/coin-factory/coins"
 	"github.com/grupokindynos/common/obol"
@@ -20,11 +26,6 @@ import (
 	"github.com/grupokindynos/obol/services/exchanges/stex"
 	"github.com/joho/godotenv"
 	"github.com/olympus-protocol/ogen/utils/amount"
-	"io/ioutil"
-	"math"
-	"os"
-	"strconv"
-	"time"
 )
 
 func init() {
@@ -183,6 +184,9 @@ func (rs *RateSevice) GetCoinToCoinRatesWithAmount(coinFrom *coins.Coin, coinTo 
 			return obol.CoinToCoinWithAmountResponse{}, err
 		}
 		coinWall = coinToWalls["buy"]
+		for i := 0; i < len(coinWall); i++ {
+			coinWall[i].Amount *= coinWall[i].Price.ToNormalUnit()
+		}
 	} else {
 		coinFromWalls, err := rs.GetCoinOrdersWall(coinFrom)
 		if err != nil {
@@ -194,12 +198,6 @@ func (rs *RateSevice) GetCoinToCoinRatesWithAmount(coinFrom *coins.Coin, coinTo 
 	btcData, err := coinfactory.GetCoin("BTC")
 	if err != nil {
 		return obol.CoinToCoinWithAmountResponse{}, err
-	}
-	if amountRequested <= coinWall[0].Amount {
-		return obol.CoinToCoinWithAmountResponse{
-			AveragePrice: toFixed(coinWall[0].Price.ToNormalUnit(), 8),
-			Amount: coinWall[0].Price.ToNormalUnit() * amountRequested,
-		}, nil
 	}
 
 	var rates [][]float64
@@ -232,17 +230,18 @@ func (rs *RateSevice) GetCoinToCoinRatesWithAmount(coinFrom *coins.Coin, coinTo 
 		}
 	}
 	var rate obol.CoinToCoinWithAmountResponse
-	if coinTo.Info.Tag == "BTC" || coinFrom.Info.Tag == "BTC" {
+	if coinTo.Info.Tag == "BTC" {
 		rate.AveragePrice = toFixed(AvrPrice, 8)
-		rate.Amount = rate.AveragePrice * amountRequested
+	} else if coinFrom.Info.Tag == "BTC" {
+		rate.AveragePrice = toFixed(1.0/AvrPrice, 8)
 	} else {
 		rateConv, err := rs.GetCoinToCoinRates(coinTo, btcData)
 		if err != nil {
 			return rate, err
 		}
 		rate.AveragePrice = toFixed(AvrPrice/rateConv, 8)
-		rate.Amount = rate.AveragePrice * amountRequested
 	}
+	rate.Amount = rate.AveragePrice * amountRequested
 	return rate, err
 }
 

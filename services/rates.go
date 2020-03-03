@@ -45,7 +45,7 @@ type Exchange interface {
 
 type BtcRates struct {
 	LastUpdated int64
-	Rates       []models.Rate
+	Rates       map[string]models.Rate
 }
 
 // RateSevice is the main wrapper for all different exchanges and fiat rates data
@@ -65,7 +65,8 @@ type RateSevice struct {
 }
 
 // GetCoinRates is the main function to get the rates of a coin using the OpenRates structure
-func (rs *RateSevice) GetCoinRates(coin *coins.Coin, buyWall bool) (rates []models.Rate, err error) {
+func (rs *RateSevice) GetCoinRates(coin *coins.Coin, buyWall bool) (map[string]models.Rate, error) {
+	rates := make(map[string]models.Rate)
 	btcRates, err := rs.GetBtcRates()
 	if err != nil {
 		return rates, err
@@ -84,13 +85,12 @@ func (rs *RateSevice) GetCoinRates(coin *coins.Coin, buyWall bool) (rates []mode
 		orders = ratesWall["sell"]
 	}
 	orderPrice := orders[0].Price
-	for _, singleRate := range btcRates {
+	for code, singleRate := range btcRates {
 		singleRateConv, err := amount.NewAmount(singleRate.Rate)
 		if err != nil {
 			return nil, err
 		}
 		rate := models.Rate{
-			Code: singleRate.Code,
 			Name: singleRate.Name,
 		}
 		var rateNum float64
@@ -99,12 +99,12 @@ func (rs *RateSevice) GetCoinRates(coin *coins.Coin, buyWall bool) (rates []mode
 		} else {
 			rateNum = orderPrice.ToNormalUnit() * singleRateConv.ToNormalUnit()
 		}
-		if singleRate.Code == "BTC" {
+		if code == "BTC" {
 			rate.Rate = toFixed(rateNum, 8)
 		} else {
 			rate.Rate = toFixed(rateNum, 4)
 		}
-		rates = append(rates, rate)
+		rates[code] = rate
 	}
 	return rates, err
 }
@@ -116,8 +116,8 @@ func (rs *RateSevice) GetCoinToCoinRates(coinFrom *coins.Coin, coinTo *coins.Coi
 	}
 	if coinTo.Info.Tag == "BTC" {
 		coinRates, err := rs.GetCoinRates(coinFrom, false)
-		for _, rate := range coinRates {
-			if rate.Code == "BTC" {
+		for code, rate := range coinRates {
+			if code == "BTC" {
 				return rate.Rate, err
 			}
 		}
@@ -131,14 +131,14 @@ func (rs *RateSevice) GetCoinToCoinRates(coinFrom *coins.Coin, coinTo *coins.Coi
 		return 0, err
 	}
 	var coinFromUSDRate float64
-	for _, rate := range coinFromRates {
-		if rate.Code == "USD" {
+	for code, rate := range coinFromRates {
+		if code == "USD" {
 			coinFromUSDRate = rate.Rate
 		}
 	}
 	var coinToUSDRate float64
-	for _, rate := range coinToRates {
-		if rate.Code == "USD" {
+	for code, rate := range coinToRates {
+		if code == "USD" {
 			coinToUSDRate = rate.Rate
 		}
 	}
@@ -160,8 +160,8 @@ func (rs *RateSevice) GetCoinLiquidity(coin *coins.Coin) (float64, error) {
 		return 0, err
 	}
 	var btcUSDRate float64
-	for _, rate := range btcRates {
-		if rate.Code == "USD" {
+	for code, rate := range btcRates {
+		if code == "USD" {
 			btcUSDRate = rate.Rate
 		}
 	}
@@ -326,9 +326,10 @@ func (rs *RateSevice) GetBtcEURRate() (float64, error) {
 }
 
 // GetBtcRates will return the Bitcoin rates using the OpenRates structure
-func (rs *RateSevice) GetBtcRates() (rates []models.Rate, err error) {
+func (rs *RateSevice) GetBtcRates() (map[string]models.Rate, error) {
+	rates := make(map[string]models.Rate)
 	if rs.FiatRates.LastUpdated.Unix()+UpdateFiatRatesTimeFrame < time.Now().Unix() {
-		err = rs.LoadFiatRates()
+		err := rs.LoadFiatRates()
 		if err != nil {
 			return nil, err
 		}
@@ -337,17 +338,16 @@ func (rs *RateSevice) GetBtcRates() (rates []models.Rate, err error) {
 		return rs.BtcRates.Rates, nil
 	}
 	btcRate, err := rs.GetBtcEURRate()
-	for key, rate := range rs.FiatRates.Rates {
+	for code, rate := range rs.FiatRates.Rates {
 		newRate, err := amount.NewAmount(rate * btcRate)
 		if err != nil {
 			return nil, err
 		}
 		rate := models.Rate{
-			Code: key,
-			Name: models.FixerRatesNames[key],
+			Name: models.FixerRatesNames[code],
 			Rate: newRate.ToNormalUnit(),
 		}
-		rates = append(rates, rate)
+		rates[code] = rate
 	}
 	return rates, err
 }

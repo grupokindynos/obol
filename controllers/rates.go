@@ -38,7 +38,7 @@ func (rc *RateController) GetCoinToFIATRate(c *gin.Context) {
 	}
 	if rc.RatesCache[fromCoinData.Info.Tag].LastUpdated+RatesCacheTimeFrame > time.Now().Unix() {
 		if rate, ok := rc.RatesCache[fromCoinData.Info.Tag].Rates[tocoin]; ok {
-			responses.GlobalResponseError(rate, err, c)
+			responses.GlobalResponseError(rate.Rate, err, c)
 			return
 		}
 		responses.GlobalResponseError(nil, errors.New("FIAT coin not found"), c)
@@ -50,7 +50,7 @@ func (rc *RateController) GetCoinToFIATRate(c *gin.Context) {
 		Rates:       rates,
 	}
 	if rate, ok := rc.RatesCache[fromCoinData.Info.Tag].Rates[tocoin]; ok {
-		responses.GlobalResponseError(rate, err, c)
+		responses.GlobalResponseError(rate.Rate, err, c)
 		return
 	}
 	responses.GlobalResponseError(nil, errors.New("FIAT coin not found"), c)

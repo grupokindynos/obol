@@ -9,6 +9,7 @@ import (
 	"github.com/grupokindynos/obol/services"
 	"errors"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -16,7 +17,7 @@ const RatesCacheTimeFrame = 60 * 15 // 15 minutes
 
 type CoinRate struct {
 	LastUpdated int64
-	Rates       map[string] models.Rate
+	Rates       map[string] models.RateV2
 }
 
 // RateController is the main type for serving the API routes.
@@ -25,9 +26,11 @@ type RateController struct {
 	RatesCache  map[string]CoinRate
 }
 
+// Returns rate from crypto to specific FIAT currency
 func (rc *RateController) GetCoinToFIATRate(c *gin.Context) {
 	fromcoin := c.Param("fromcoin")
 	tocoin := c.Param("tocoin")
+	tocoin = strings.ToUpper(tocoin)
 	fromCoinData, err := coinfactory.GetCoin(fromcoin)
 	if err != nil {
 		responses.GlobalResponseError(nil, err, c)
@@ -55,7 +58,7 @@ func (rc *RateController) GetCoinToFIATRate(c *gin.Context) {
 }
 
 // GetCoinRates will return a rate map based on the selected coin
-func (rc *RateController) GetCoinRates(c *gin.Context) {
+func (rc *RateController) GetCoinRatesV2(c *gin.Context) {
 	coin := c.Param("coin")
 	coinData, err := coinfactory.GetCoin(coin)
 	if err != nil {
@@ -72,6 +75,33 @@ func (rc *RateController) GetCoinRates(c *gin.Context) {
 		Rates:       rates,
 	}
 	responses.GlobalResponseError(rc.RatesCache[coinData.Info.Tag].Rates, err, c)
+	return
+}
+
+// GetCoinRates will return a rate map based on the selected coin
+func (rc *RateController) GetCoinRates(c *gin.Context) {
+	coin := c.Param("coin")
+	coinData, err := coinfactory.GetCoin(coin)
+	if err != nil {
+		responses.GlobalResponseError(nil, err, c)
+		return
+	}
+	if rc.RatesCache[coinData.Info.Tag].LastUpdated+RatesCacheTimeFrame > time.Now().Unix() {
+		ratesV1 := convertToV1Array(rc.RatesCache[coinData.Info.Tag].Rates)
+		responses.GlobalResponseError(ratesV1, err, c)
+		return
+	}
+	rates, err := rc.RateService.GetCoinRates(coinData, false)
+	if err != nil {
+		responses.GlobalResponseError(nil, err, c)
+		return
+	}
+	ratesV1 := convertToV1Array(rates)
+	rc.RatesCache[coinData.Info.Tag] = CoinRate{
+		LastUpdated: time.Now().Unix(),
+		Rates:       rates,
+	}
+	responses.GlobalResponseError(ratesV1, err, c)
 	return
 }
 
@@ -120,5 +150,17 @@ func (rc *RateController) GetCoinLiquidity(c *gin.Context) {
 		return
 	}
 	responses.GlobalResponseError(liquidity, err, c)
+	return
+}
+
+func convertToV1Array(ratesMap map[string]models.RateV2) (rates []models.Rate){
+	for code, rate := range ratesMap {
+		newRate := models.Rate{
+			Code: code,
+			Name: rate.Name,
+			Rate: rate.Rate,
+		}
+		rates = append(rates, newRate)
+	}
 	return
 }

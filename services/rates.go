@@ -45,7 +45,7 @@ type Exchange interface {
 
 type BtcRates struct {
 	LastUpdated int64
-	Rates       map[string]models.Rate
+	Rates       map[string]models.RateV2
 }
 
 // RateSevice is the main wrapper for all different exchanges and fiat rates data
@@ -65,8 +65,8 @@ type RateSevice struct {
 }
 
 // GetCoinRates is the main function to get the rates of a coin using the OpenRates structure
-func (rs *RateSevice) GetCoinRates(coin *coins.Coin, buyWall bool) (map[string]models.Rate, error) {
-	rates := make(map[string]models.Rate)
+func (rs *RateSevice) GetCoinRates(coin *coins.Coin, buyWall bool) (map[string]models.RateV2, error) {
+	rates := make(map[string]models.RateV2)
 	btcRates, err := rs.GetBtcRates()
 	if err != nil {
 		return rates, err
@@ -90,7 +90,7 @@ func (rs *RateSevice) GetCoinRates(coin *coins.Coin, buyWall bool) (map[string]m
 		if err != nil {
 			return nil, err
 		}
-		rate := models.Rate{
+		rate := models.RateV2{
 			Name: singleRate.Name,
 		}
 		var rateNum float64
@@ -326,8 +326,8 @@ func (rs *RateSevice) GetBtcEURRate() (float64, error) {
 }
 
 // GetBtcRates will return the Bitcoin rates using the OpenRates structure
-func (rs *RateSevice) GetBtcRates() (map[string]models.Rate, error) {
-	rates := make(map[string]models.Rate)
+func (rs *RateSevice) GetBtcRates() (map[string]models.RateV2, error) {
+	rates := make(map[string]models.RateV2)
 	if rs.FiatRates.LastUpdated.Unix()+UpdateFiatRatesTimeFrame < time.Now().Unix() {
 		err := rs.LoadFiatRates()
 		if err != nil {
@@ -343,7 +343,7 @@ func (rs *RateSevice) GetBtcRates() (map[string]models.Rate, error) {
 		if err != nil {
 			return nil, err
 		}
-		rate := models.Rate{
+		rate := models.RateV2{
 			Name: models.FixerRatesNames[code],
 			Rate: newRate.ToNormalUnit(),
 		}

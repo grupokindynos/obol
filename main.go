@@ -80,7 +80,6 @@ func ApplyRoutes(r *gin.Engine) {
 		limiterMiddleware := mgin.NewMiddleware(limiter.New(store, rate))
 		api.Use(limiterMiddleware)
 		rateCtrl := controllers.RateController{RateService: rateService, RatesCache: make(map[string]controllers.CoinRate)}
-		api.GET("complexfiat/:fromcoin/:tocoin", rateCtrl.GetCoinToFIATRate)
 		api.GET("simple/:coin", rateCtrl.GetCoinRates)
 		api.GET("complex/:fromcoin/:tocoin", rateCtrl.GetCoinRateFromCoinToCoin)
 		api.GET("liquidity/:coin", rateCtrl.GetCoinLiquidity)
@@ -101,6 +100,7 @@ func ApplyRoutes(r *gin.Engine) {
 		apiv2.Use(limiterMiddleware)
 		rateCtrl := controllers.RateController{RateService: rateService, RatesCache: make(map[string]controllers.CoinRate)}
 		apiv2.GET("simple/:coin", rateCtrl.GetCoinRatesV2)
+		apiv2.GET("complexfiat/:fromcoin/:tocoin", rateCtrl.GetCoinToFIATRate)
 
 	}
 	r.NoRoute(func(c *gin.Context) {

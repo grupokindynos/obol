@@ -18,6 +18,12 @@ type FiatRates struct {
 }
 
 // Rate is the struct to homologue exchange rate responses
+type RateV2 struct {
+	Name string  `json:"name"`
+	Rate float64 `json:"rate"`
+}
+
+// Rate is the struct to homologue exchange rate responses
 type Rate struct {
 	Code string  `json:"code"`
 	Name string  `json:"name"`

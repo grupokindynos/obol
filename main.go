@@ -88,4 +88,22 @@ func ApplyRoutes(r *gin.Engine) {
 	r.NoRoute(func(c *gin.Context) {
 		c.String(http.StatusNotFound, "Not Found")
 	})
+
+	apiv2 := r.Group("/v2/")
+	{
+		rate := limiter.Rate{
+			Period: 1 * time.Hour,
+			Limit:  1000,
+		}
+		store := memory.NewStore()
+		limiterMiddleware := mgin.NewMiddleware(limiter.New(store, rate))
+		apiv2.Use(limiterMiddleware)
+		rateCtrl := controllers.RateController{RateService: rateService, RatesCache: make(map[string]controllers.CoinRate)}
+		apiv2.GET("simple/:coin", rateCtrl.GetCoinRatesV2)
+		apiv2.GET("complexfiat/:fromcoin/:tocoin", rateCtrl.GetCoinToFIATRate)
+
+	}
+	r.NoRoute(func(c *gin.Context) {
+		c.String(http.StatusNotFound, "Not Found")
+	})
 }

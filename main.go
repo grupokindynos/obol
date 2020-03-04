@@ -81,10 +81,26 @@ func ApplyRoutes(r *gin.Engine) {
 		api.Use(limiterMiddleware)
 		rateCtrl := controllers.RateController{RateService: rateService, RatesCache: make(map[string]controllers.CoinRate)}
 		api.GET("complexfiat/:fromcoin/:tocoin", rateCtrl.GetCoinToFIATRate)
-		api.GET("v2/simple/:coin", rateCtrl.GetCoinRatesV2)
 		api.GET("simple/:coin", rateCtrl.GetCoinRates)
 		api.GET("complex/:fromcoin/:tocoin", rateCtrl.GetCoinRateFromCoinToCoin)
 		api.GET("liquidity/:coin", rateCtrl.GetCoinLiquidity)
+
+	}
+	r.NoRoute(func(c *gin.Context) {
+		c.String(http.StatusNotFound, "Not Found")
+	})
+
+	apiv2 := r.Group("/v2/")
+	{
+		rate := limiter.Rate{
+			Period: 1 * time.Hour,
+			Limit:  1000,
+		}
+		store := memory.NewStore()
+		limiterMiddleware := mgin.NewMiddleware(limiter.New(store, rate))
+		apiv2.Use(limiterMiddleware)
+		rateCtrl := controllers.RateController{RateService: rateService, RatesCache: make(map[string]controllers.CoinRate)}
+		apiv2.GET("simple/:coin", rateCtrl.GetCoinRatesV2)
 
 	}
 	r.NoRoute(func(c *gin.Context) {

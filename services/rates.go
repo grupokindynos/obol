@@ -9,7 +9,7 @@ import (
 	"strconv"
 	"time"
 
-	coinfactory "github.com/grupokindynos/common/coin-factory"
+	coinFactory "github.com/grupokindynos/common/coin-factory"
 	"github.com/grupokindynos/common/coin-factory/coins"
 	"github.com/grupokindynos/common/obol"
 	"github.com/grupokindynos/obol/config"
@@ -195,7 +195,7 @@ func (rs *RateSevice) GetCoinToCoinRatesWithAmount(coinFrom *coins.Coin, coinTo 
 		coinWall = coinFromWalls["sell"]
 	}
 	amountParsed := amountRequested
-	btcData, err := coinfactory.GetCoin("BTC")
+	btcData, err := coinFactory.GetCoin("BTC")
 	if err != nil {
 		return obol.CoinToCoinWithAmountResponse{}, err
 	}

@@ -1,13 +1,14 @@
 package controllers
 
 import (
+	"errors"
 	"github.com/gin-gonic/gin"
 	"github.com/grupokindynos/common/coin-factory"
 	"github.com/grupokindynos/common/responses"
 	"github.com/grupokindynos/obol/config"
 	"github.com/grupokindynos/obol/models"
 	"github.com/grupokindynos/obol/services"
-	"errors"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -97,6 +98,9 @@ func (rc *RateController) GetCoinRates(c *gin.Context) {
 		return
 	}
 	ratesV1 := convertToV1Array(rates)
+	sort.Slice(rates, func(i, j int) bool {
+		return ratesV1[i].Code < ratesV1[j].Code
+	})
 	rc.RatesCache[coinData.Info.Tag] = CoinRate{
 		LastUpdated: time.Now().Unix(),
 		Rates:       rates,

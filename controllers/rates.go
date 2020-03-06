@@ -98,7 +98,7 @@ func (rc *RateController) GetCoinRates(c *gin.Context) {
 		return
 	}
 	ratesV1 := convertToV1Array(rates)
-	sort.Slice(rates, func(i, j int) bool {
+	sort.Slice(ratesV1, func(i, j int) bool {
 		return ratesV1[i].Code < ratesV1[j].Code
 	})
 	rc.RatesCache[coinData.Info.Tag] = CoinRate{

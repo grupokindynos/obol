@@ -89,6 +89,9 @@ func (rc *RateController) GetCoinRates(c *gin.Context) {
 	}
 	if rc.RatesCache[coinData.Info.Tag].LastUpdated+RatesCacheTimeFrame > time.Now().Unix() {
 		ratesV1 := convertToV1Array(rc.RatesCache[coinData.Info.Tag].Rates)
+		sort.Slice(ratesV1, func(i, j int) bool {
+			return ratesV1[i].Code < ratesV1[j].Code
+		})
 		responses.GlobalResponseError(ratesV1, err, c)
 		return
 	}

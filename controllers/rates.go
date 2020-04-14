@@ -18,7 +18,7 @@ const RatesCacheTimeFrame = 60 * 15 // 15 minutes
 
 type CoinRate struct {
 	LastUpdated int64
-	Rates       map[string] models.RateV2
+	Rates       map[string]models.RateV2
 }
 
 // RateController is the main type for serving the API routes.
@@ -160,7 +160,7 @@ func (rc *RateController) GetCoinLiquidity(c *gin.Context) {
 	return
 }
 
-func convertToV1Array(ratesMap map[string]models.RateV2) (rates []models.Rate){
+func convertToV1Array(ratesMap map[string]models.RateV2) (rates []models.Rate) {
 	for code, rate := range ratesMap {
 		newRate := models.Rate{
 			Code: code,

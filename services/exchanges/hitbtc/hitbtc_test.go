@@ -1,4 +1,4 @@
-package folgory
+package hitbtc
 
 import (
 	"github.com/stretchr/testify/assert"
@@ -8,7 +8,7 @@ import (
 var service = InitService()
 
 func TestService_CoinMarketOrders(t *testing.T) {
-	orders, err := service.CoinMarketOrders("LMY")
+	orders, err := service.CoinMarketOrders("AYA")
 	if err != nil {
 		assert.Nil(t, len(orders))
 		assert.NotNil(t, err)

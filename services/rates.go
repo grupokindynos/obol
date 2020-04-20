@@ -3,6 +3,8 @@ package services
 import (
 	"encoding/json"
 	"errors"
+	"github.com/grupokindynos/obol/services/exchanges/folgory"
+	"github.com/grupokindynos/obol/services/exchanges/hitbtc"
 	"io/ioutil"
 	"math"
 	"os"
@@ -62,6 +64,8 @@ type RateSevice struct {
 	KuCoinService       *kucoin.Service
 	GraviexService      *graviex.Service
 	BitrueService       *bitrue.Service
+	FolgoryService      *folgory.Service
+	HitBTCService       *hitbtc.Service
 }
 
 // GetCoinRates is the main function to get the rates of a coin using the OpenRates structure
@@ -251,6 +255,10 @@ func (rs *RateSevice) GetCoinOrdersWall(coin *coins.Coin) (orders map[string][]m
 	switch coin.Rates.Exchange {
 	case "binance":
 		service = rs.BinanceService
+	case "folgory":
+		service = rs.FolgoryService
+	case "hitbtc":
+		service = rs.HitBTCService
 	case "bittrex":
 		service = rs.BittrexService
 	case "bitrue":
@@ -277,6 +285,10 @@ func (rs *RateSevice) GetCoinOrdersWall(coin *coins.Coin) (orders map[string][]m
 		switch coin.Rates.FallBackExchange {
 		case "binance":
 			fallBackService = rs.BinanceService
+		case "folgory":
+			fallBackService = rs.FolgoryService
+		case "hitbtc":
+			fallBackService = rs.HitBTCService
 		case "bittrex":
 			fallBackService = rs.BittrexService
 		case "bitrue":

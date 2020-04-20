@@ -1,4 +1,4 @@
-package folgory
+package hitbtc
 
 import (
 	"encoding/json"
@@ -28,30 +28,30 @@ func (s *Service) CoinMarketOrders(coin string) (orders map[string][]models.Mark
 		_ = res.Body.Close()
 	}()
 	contents, err := ioutil.ReadAll(res.Body)
-	var Response exchanges.FolgoryMarkets
+	var Response exchanges.HitBTCRate
 	err = json.Unmarshal(contents, &Response)
 	var buyOrders []models.MarketOrder
 	var sellOrders []models.MarketOrder
-	for _, order := range Response.Data.Asks {
-		price, _ := strconv.ParseFloat(order[0], 64)
+	for _, order := range Response[strings.ToUpper(coin)+"BTC"].Ask {
+		price, _ := strconv.ParseFloat(order.Price, 64)
 		priceConv, err := amount.NewAmount(price)
 		if err != nil {
 			return nil, err
 		}
-		am, _ := strconv.ParseFloat(order[1], 64)
+		am, _ := strconv.ParseFloat(order.Size, 64)
 		newOrder := models.MarketOrder{
 			Price:  priceConv,
 			Amount: am,
 		}
 		sellOrders = append(sellOrders, newOrder)
 	}
-	for _, order := range Response.Data.Bids {
-		price, _ := strconv.ParseFloat(order[0], 64)
+	for _, order := range Response[strings.ToUpper(coin)+"BTC"].Bid {
+		price, _ := strconv.ParseFloat(order.Price, 64)
 		priceConv, err := amount.NewAmount(price)
 		if err != nil {
 			return nil, err
 		}
-		am, _ := strconv.ParseFloat(order[1], 64)
+		am, _ := strconv.ParseFloat(order.Size, 64)
 		newOrder := models.MarketOrder{
 			Price:  priceConv,
 			Amount: am,
@@ -66,7 +66,7 @@ func (s *Service) CoinMarketOrders(coin string) (orders map[string][]models.Mark
 // InitService is used to safely start a new service reference.
 func InitService() *Service {
 	s := &Service{
-		MarketRateURL: "https://folgory.com/market/order_book?symbol=",
+		MarketRateURL: "https://api.hitbtc.com/api/2/public/orderbook?symbols=",
 	}
 	return s
 }

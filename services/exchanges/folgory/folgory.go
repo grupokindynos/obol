@@ -34,12 +34,12 @@ func (s *Service) CoinMarketOrders(coin string) (orders map[string][]models.Mark
 	var buyOrders []models.MarketOrder
 	var sellOrders []models.MarketOrder
 	for _, order := range Response.Data.Asks {
-		price, _ := strconv.ParseFloat(order[0], 64)
+		price, _ := strconv.ParseFloat(order[1], 64)
 		priceConv, err := amount.NewAmount(price)
 		if err != nil {
 			return nil, err
 		}
-		am, _ := strconv.ParseFloat(order[1], 64)
+		am, _ := strconv.ParseFloat(order[0], 64)
 		newOrder := models.MarketOrder{
 			Price:  priceConv,
 			Amount: am,

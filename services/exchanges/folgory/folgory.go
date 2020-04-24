@@ -2,13 +2,14 @@ package folgory
 
 import (
 	"encoding/json"
+	"io/ioutil"
+	"strconv"
+	"strings"
+
 	"github.com/grupokindynos/obol/config"
 	"github.com/grupokindynos/obol/models"
 	"github.com/grupokindynos/obol/models/exchanges"
 	"github.com/olympus-protocol/ogen/utils/amount"
-	"io/ioutil"
-	"strconv"
-	"strings"
 )
 
 // Service is a common structure for a exchange
@@ -19,7 +20,7 @@ type Service struct {
 // CoinMarketOrders is used to get the market sell and buy wall from a coin
 func (s *Service) CoinMarketOrders(coin string) (orders map[string][]models.MarketOrder, err error) {
 	orders = make(map[string][]models.MarketOrder)
-	marketStr := strings.ToUpper(coin) + "BTC"
+	marketStr := strings.ToUpper(coin) + "_BTC"
 	res, err := config.HttpClient.Get(s.MarketRateURL + marketStr)
 	if err != nil {
 		return orders, config.ErrorRequestTimeout

@@ -3,6 +3,7 @@ package services
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io/ioutil"
 	"os"
 	"strconv"
@@ -92,19 +93,20 @@ func (rs *RateSevice) GetCoinRates(coin *coins.Coin, buyWall bool) (map[string]m
 	}
 	orderPrice := orders[0].Price
 	for code, singleRate := range btcRates {
+		rateDec := decimal.NewFromFloat(singleRate.Rate)
 		rate := models.RateV2{
 			Name: singleRate.Name,
 		}
 		var rateNum decimal.Decimal
 		if coin.Info.Tag == "USDC" || coin.Info.Tag == "TUSD" || coin.Info.Tag == "USDT" {
-			rateNum = singleRate.Rate.Div(orderPrice)
+			rateNum = rateDec.Div(orderPrice)
 		} else {
-			rateNum = orderPrice.Mul(singleRate.Rate)
+			rateNum = orderPrice.Mul(rateDec)
 		}
 		if code == "BTC" {
-			rate.Rate = rateNum.Round(8)
+			rate.Rate, _ = rateNum.Round(8).Float64()
 		} else {
-			rate.Rate = rateNum.Round(6)
+			rate.Rate, _ = rateNum.Round(6).Float64()
 		}
 		rates[code] = rate
 	}
@@ -112,7 +114,7 @@ func (rs *RateSevice) GetCoinRates(coin *coins.Coin, buyWall bool) (map[string]m
 }
 
 // GetCoinToCoinRates will return the rates from a crypto to a crypto using the exchanges data
-func (rs *RateSevice) GetCoinToCoinRates(coinFrom *coins.Coin, coinTo *coins.Coin) (rate decimal.Decimal, err error) {
+func (rs *RateSevice) GetCoinToCoinRates(coinFrom *coins.Coin, coinTo *coins.Coin) (rate float64, err error) {
 	if coinFrom.Info.Tag == coinTo.Info.Tag {
 		return rate, config.ErrorNoC2CWithSameCoin
 	}
@@ -126,48 +128,51 @@ func (rs *RateSevice) GetCoinToCoinRates(coinFrom *coins.Coin, coinTo *coins.Coi
 	}
 	coinFromRates, err := rs.GetCoinRates(coinFrom, false)
 	if err != nil {
-		return decimal.Zero, err
+		return 0, err
 	}
 	coinToRates, err := rs.GetCoinRates(coinTo, false)
 	if err != nil {
-		return decimal.Zero, err
+		return 0, err
 	}
 	var coinFromUSDRate decimal.Decimal
 	for code, rate := range coinFromRates {
 		if code == "USD" {
-			coinFromUSDRate = rate.Rate
+			coinFromUSDRate = decimal.NewFromFloat(rate.Rate)
 		}
 	}
 	var coinToUSDRate decimal.Decimal
 	for code, rate := range coinToRates {
 		if code == "USD" {
-			coinToUSDRate = rate.Rate
+			coinToUSDRate = decimal.NewFromFloat(rate.Rate)
 		}
 	}
-	return coinFromUSDRate.DivRound(coinToUSDRate, 6), nil
+	floatConvert, _ := coinFromUSDRate.DivRound(coinToUSDRate, 6).Float64()
+	return floatConvert, nil
 }
 
-func (rs *RateSevice) GetCoinLiquidity(coin *coins.Coin) (decimal.Decimal, error) {
+func (rs *RateSevice) GetCoinLiquidity(coin *coins.Coin) (float64, error) {
 	coinWalls, err := rs.GetCoinOrdersWall(coin)
 	if err != nil {
-		return decimal.Zero, err
+		return 0, err
 	}
 	orderWall := coinWalls["sell"]
 	var liquidity decimal.Decimal
 	for _, order := range orderWall {
-		liquidity.Add(order.Amount.Mul(order.Price))
+		orderLiquidity := order.Amount.Mul(order.Price)
+		liquidity = liquidity.Add(orderLiquidity)
 	}
 	btcRates, err := rs.GetBtcRates()
 	if err != nil {
-		return decimal.Zero, err
+		return 0, err
 	}
 	var btcUSDRate decimal.Decimal
 	for code, rate := range btcRates {
 		if code == "USD" {
-			btcUSDRate = rate.Rate
+			btcUSDRate = decimal.NewFromFloat(rate.Rate)
 		}
 	}
-	return liquidity.Mul(btcUSDRate).Round(8), err
+	floatConvert, _ := liquidity.Mul(btcUSDRate).Round(8).Float64()
+	return floatConvert, err
 }
 
 // GetCoinToCoinRatesWithAmount is used to get the rates from crypto to crypto using a specified amount to convert
@@ -233,17 +238,19 @@ func (rs *RateSevice) GetCoinToCoinRatesWithAmount(coinFrom *coins.Coin, coinTo 
 	}
 	var rate obol.CoinToCoinWithAmountResponse
 	if coinTo.Info.Tag == "BTC" {
-		rate.AveragePrice = AvrPrice.Round(8)
+		rate.AveragePrice, _ = AvrPrice.Round(8).Float64()
 	} else if coinFrom.Info.Tag == "BTC" {
-		rate.AveragePrice = decimal.NewFromInt(1).DivRound(AvrPrice, 8)
+		rate.AveragePrice, _ = decimal.NewFromInt(1).DivRound(AvrPrice, 8).Float64()
 	} else {
 		rateConv, err := rs.GetCoinToCoinRates(coinTo, btcData)
 		if err != nil {
 			return rate, err
 		}
-		rate.AveragePrice = AvrPrice.DivRound(rateConv, 8)
+		rate.AveragePrice, _ = AvrPrice.DivRound(decimal.NewFromFloat(rateConv), 8).Float64()
 	}
-	rate.Amount = rate.AveragePrice.Mul(amountRequested)
+	amount := decimal.NewFromFloat(rate.AveragePrice)
+	amount.Mul(amountRequested)
+	rate.Amount, _ = amount.Float64()
 	return rate, err
 }
 
@@ -354,9 +361,10 @@ func (rs *RateSevice) GetBtcRates() (map[string]models.RateV2, error) {
 	btcRate, err := rs.GetBtcEURRate()
 	for code, rate := range rs.FiatRates.Rates {
 		newRate := decimal.NewFromFloat(rate * btcRate)
+		float, _ := newRate.Float64()
 		rate := models.RateV2{
 			Name: models.FixerRatesNames[code],
-			Rate: newRate,
+			Rate: float,
 		}
 		rates[code] = rate
 	}

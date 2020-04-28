@@ -240,6 +240,12 @@ func (rs *RateSevice) GetCoinToCoinRatesWithAmount(coinFrom *coins.Coin, coinTo 
 		rate.AveragePrice, _ = AvrPrice.Round(8).Float64()
 	} else if coinFrom.Info.Tag == "BTC" {
 		rate.AveragePrice, _ = decimal.NewFromInt(1).DivRound(AvrPrice, 8).Float64()
+	} else if coinFrom.Info.Token && coinFrom.Info.Tag != "ETH" {
+		rateConv, err := rs.GetCoinToCoinRates(coinFrom, coinTo)
+		if err != nil {
+			return rate, err
+		}
+		rate.AveragePrice = rateConv
 	} else {
 		rateConv, err := rs.GetCoinToCoinRates(coinTo, btcData)
 		if err != nil {

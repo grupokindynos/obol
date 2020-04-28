@@ -1,8 +1,9 @@
-package novaexchange
+package lukki
 
 import (
 	"encoding/json"
 	"io/ioutil"
+	"sort"
 	"strconv"
 	"strings"
 
@@ -20,7 +21,8 @@ type Service struct {
 // CoinMarketOrders is used to get the market sell and buy wall from a coin
 func (s *Service) CoinMarketOrders(coin string) (orders map[string][]models.MarketOrder, err error) {
 	orders = make(map[string][]models.MarketOrder)
-	res, err := config.HttpClient.Get(s.MarketRateURL + "BTC_" + strings.ToUpper(coin))
+	marketStr := strings.ToLower(coin) + "_btc"
+	res, err := config.HttpClient.Get(s.MarketRateURL + marketStr)
 	if err != nil {
 		return orders, config.ErrorRequestTimeout
 	}
@@ -31,15 +33,15 @@ func (s *Service) CoinMarketOrders(coin string) (orders map[string][]models.Mark
 	if err != nil {
 		return orders, config.ErrorRequestTimeout
 	}
-	var Response exchanges.NovaExchangeMarkets
+	var Response exchanges.LukkiMarkets
 	err = json.Unmarshal(contents, &Response)
 	if err != nil {
 		return orders, config.ErrorRequestTimeout
 	}
 	var buyOrders []models.MarketOrder
 	var sellOrders []models.MarketOrder
-	for _, order := range Response.Items {
-		if order.Tradetype == "BUY" {
+	for _, order := range Response.Data {
+		if order.Direction == 0 {
 			price, err := strconv.ParseFloat(order.Price, 64)
 			if err != nil {
 				return orders, config.ErrorRequestTimeout
@@ -54,7 +56,7 @@ func (s *Service) CoinMarketOrders(coin string) (orders map[string][]models.Mark
 				Amount: am,
 			}
 			buyOrders = append(buyOrders, newOrder)
-		} else if order.Tradetype == "SELL" {
+		} else {
 			price, err := strconv.ParseFloat(order.Price, 64)
 			if err != nil {
 				return orders, config.ErrorRequestTimeout
@@ -72,6 +74,15 @@ func (s *Service) CoinMarketOrders(coin string) (orders map[string][]models.Mark
 		}
 
 	}
+	// Since lukki send the information unordered we should order the walls.
+	// For buy order is from lowest to biggest and for sell orders is from biggest to lowest based on the price.
+
+	sort.Slice(buyOrders, func(i, j int) bool {
+		return buyOrders[i].Price.GreaterThan(buyOrders[j].Price)
+	})
+	sort.Slice(sellOrders, func(i, j int) bool {
+		return sellOrders[i].Price.LessThan(sellOrders[j].Price)
+	})
 	orders["buy"] = buyOrders
 	orders["sell"] = sellOrders
 	return orders, err
@@ -80,7 +91,7 @@ func (s *Service) CoinMarketOrders(coin string) (orders map[string][]models.Mark
 // InitService is used to safely start a new service reference.
 func InitService() *Service {
 	s := &Service{
-		MarketRateURL: "https://novaexchange.com/remote/v2/market/orderhistory/",
+		MarketRateURL: "https://tva.lukki.io/trading/books?&ticker=",
 	}
 	return s
 }

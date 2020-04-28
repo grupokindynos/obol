@@ -2,13 +2,14 @@ package graviex
 
 import (
 	"encoding/json"
-	"github.com/grupokindynos/obol/config"
-	"github.com/grupokindynos/obol/models"
-	"github.com/grupokindynos/obol/models/exchanges"
-	"github.com/olympus-protocol/ogen/utils/amount"
 	"io/ioutil"
 	"strconv"
 	"strings"
+
+	"github.com/grupokindynos/obol/config"
+	"github.com/grupokindynos/obol/models"
+	"github.com/grupokindynos/obol/models/exchanges"
+	"github.com/shopspring/decimal"
 )
 
 // Service is a common structure for a exchange
@@ -27,17 +28,26 @@ func (s *Service) CoinMarketOrders(coin string) (orders map[string][]models.Mark
 		_ = res.Body.Close()
 	}()
 	contents, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		return orders, config.ErrorRequestTimeout
+	}
 	var Response exchanges.GraviexMarkets
 	err = json.Unmarshal(contents, &Response)
+	if err != nil {
+		return orders, config.ErrorRequestTimeout
+	}
 	var buyOrders []models.MarketOrder
 	var sellOrders []models.MarketOrder
 	for _, order := range Response.Asks {
-		price, _ := strconv.ParseFloat(order[0], 64)
-		priceConv, err := amount.NewAmount(price)
+		price, err := strconv.ParseFloat(order[0], 64)
 		if err != nil {
-			return nil, err
+			return orders, config.ErrorRequestTimeout
 		}
-		am, _ := strconv.ParseFloat(order[1], 64)
+		priceConv := decimal.NewFromFloat(price)
+		am, err := strconv.ParseFloat(order[1], 64)
+		if err != nil {
+			return orders, config.ErrorRequestTimeout
+		}
 		newOrder := models.MarketOrder{
 			Price:  priceConv,
 			Amount: am,
@@ -45,12 +55,15 @@ func (s *Service) CoinMarketOrders(coin string) (orders map[string][]models.Mark
 		buyOrders = append(buyOrders, newOrder)
 	}
 	for _, order := range Response.Bids {
-		price, _ := strconv.ParseFloat(order[0], 64)
-		priceConv, err := amount.NewAmount(price)
+		price, err := strconv.ParseFloat(order[0], 64)
 		if err != nil {
-			return nil, err
+			return orders, config.ErrorRequestTimeout
 		}
-		am, _ := strconv.ParseFloat(order[1], 64)
+		priceConv := decimal.NewFromFloat(price)
+		am, err := strconv.ParseFloat(order[1], 64)
+		if err != nil {
+			return orders, config.ErrorRequestTimeout
+		}
 		newOrder := models.MarketOrder{
 			Price:  priceConv,
 			Amount: am,

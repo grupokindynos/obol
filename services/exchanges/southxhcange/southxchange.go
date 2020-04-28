@@ -2,12 +2,13 @@ package southxhcange
 
 import (
 	"encoding/json"
+	"io/ioutil"
+	"strings"
+
 	"github.com/grupokindynos/obol/config"
 	"github.com/grupokindynos/obol/models"
 	"github.com/grupokindynos/obol/models/exchanges"
-	"github.com/olympus-protocol/ogen/utils/amount"
-	"io/ioutil"
-	"strings"
+	"github.com/shopspring/decimal"
 )
 
 // Service is a common structure for a exchange
@@ -26,17 +27,20 @@ func (s *Service) CoinMarketOrders(coin string) (orders map[string][]models.Mark
 		_ = res.Body.Close()
 	}()
 	contents, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		return orders, config.ErrorRequestTimeout
+	}
 	var Response exchanges.SouthXChangeMarkets
 	err = json.Unmarshal(contents, &Response)
+	if err != nil {
+		return orders, config.ErrorRequestTimeout
+	}
 	var buyOrders []models.MarketOrder
 	var sellOrders []models.MarketOrder
 	for _, order := range Response.BuyOrders {
 		price := order.Price
 		am := order.Amount
-		priceConv, err := amount.NewAmount(price)
-		if err != nil {
-			return nil, err
-		}
+		priceConv := decimal.NewFromFloat(price)
 		newOrder := models.MarketOrder{
 			Price:  priceConv,
 			Amount: am,
@@ -45,10 +49,7 @@ func (s *Service) CoinMarketOrders(coin string) (orders map[string][]models.Mark
 	}
 	for _, order := range Response.SellOrders {
 		price := order.Price
-		priceConv, err := amount.NewAmount(price)
-		if err != nil {
-			return nil, err
-		}
+		priceConv := decimal.NewFromFloat(price)
 		am := order.Amount
 		newOrder := models.MarketOrder{
 			Price:  priceConv,

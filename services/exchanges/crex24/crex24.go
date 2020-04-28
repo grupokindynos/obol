@@ -2,12 +2,13 @@ package crex24
 
 import (
 	"encoding/json"
+	"io/ioutil"
+	"strings"
+
 	"github.com/grupokindynos/obol/config"
 	"github.com/grupokindynos/obol/models"
 	"github.com/grupokindynos/obol/models/exchanges"
-	"github.com/olympus-protocol/ogen/utils/amount"
-	"io/ioutil"
-	"strings"
+	"github.com/shopspring/decimal"
 )
 
 // Service is a common structure for a exchange
@@ -26,15 +27,18 @@ func (s *Service) CoinMarketOrders(coin string) (orders map[string][]models.Mark
 		_ = res.Body.Close()
 	}()
 	contents, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		return orders, config.ErrorRequestTimeout
+	}
 	var Response exchanges.Crex24Markets
 	err = json.Unmarshal(contents, &Response)
+	if err != nil {
+		return orders, config.ErrorRequestTimeout
+	}
 	var buyOrders []models.MarketOrder
 	var sellOrders []models.MarketOrder
 	for _, order := range Response.SellLevels {
-		priceConv, err := amount.NewAmount(order.Price)
-		if err != nil {
-			return nil, err
-		}
+		priceConv := decimal.NewFromFloat(order.Price)
 		newOrder := models.MarketOrder{
 			Price:  priceConv,
 			Amount: order.Volume,
@@ -42,10 +46,7 @@ func (s *Service) CoinMarketOrders(coin string) (orders map[string][]models.Mark
 		sellOrders = append(sellOrders, newOrder)
 	}
 	for _, order := range Response.BuyLevels {
-		priceConv, err := amount.NewAmount(order.Price)
-		if err != nil {
-			return nil, err
-		}
+		priceConv := decimal.NewFromFloat(order.Price)
 		newOrder := models.MarketOrder{
 			Price:  priceConv,
 			Amount: order.Volume,

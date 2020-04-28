@@ -3,13 +3,15 @@ package services
 import (
 	"encoding/json"
 	"errors"
-	"github.com/grupokindynos/obol/services/exchanges/folgory"
-	"github.com/grupokindynos/obol/services/exchanges/hitbtc"
 	"io/ioutil"
-	"math"
 	"os"
 	"strconv"
 	"time"
+
+	"github.com/grupokindynos/obol/services/exchanges/folgory"
+	"github.com/grupokindynos/obol/services/exchanges/hitbtc"
+	"github.com/grupokindynos/obol/services/exchanges/lukki"
+	"github.com/shopspring/decimal"
 
 	coinFactory "github.com/grupokindynos/common/coin-factory"
 	"github.com/grupokindynos/common/coin-factory/coins"
@@ -27,7 +29,6 @@ import (
 	"github.com/grupokindynos/obol/services/exchanges/southxhcange"
 	"github.com/grupokindynos/obol/services/exchanges/stex"
 	"github.com/joho/godotenv"
-	"github.com/olympus-protocol/ogen/utils/amount"
 )
 
 func init() {
@@ -66,6 +67,7 @@ type RateSevice struct {
 	BitrueService       *bitrue.Service
 	FolgoryService      *folgory.Service
 	HitBTCService       *hitbtc.Service
+	LukkiService        *lukki.Service
 }
 
 // GetCoinRates is the main function to get the rates of a coin using the OpenRates structure
@@ -90,23 +92,19 @@ func (rs *RateSevice) GetCoinRates(coin *coins.Coin, buyWall bool) (map[string]m
 	}
 	orderPrice := orders[0].Price
 	for code, singleRate := range btcRates {
-		singleRateConv, err := amount.NewAmount(singleRate.Rate)
-		if err != nil {
-			return nil, err
-		}
 		rate := models.RateV2{
 			Name: singleRate.Name,
 		}
-		var rateNum float64
+		var rateNum decimal.Decimal
 		if coin.Info.Tag == "USDC" || coin.Info.Tag == "TUSD" || coin.Info.Tag == "USDT" {
-			rateNum = singleRateConv.ToNormalUnit() / orderPrice.ToNormalUnit()
+			rateNum = singleRate.Rate.Div(orderPrice)
 		} else {
-			rateNum = orderPrice.ToNormalUnit() * singleRateConv.ToNormalUnit()
+			rateNum = orderPrice.Mul(singleRate.Rate)
 		}
 		if code == "BTC" {
-			rate.Rate = toFixed(rateNum, 8)
+			rate.Rate = rateNum.Round(8)
 		} else {
-			rate.Rate = toFixed(rateNum, 4)
+			rate.Rate = rateNum.Round(6)
 		}
 		rates[code] = rate
 	}
@@ -114,7 +112,7 @@ func (rs *RateSevice) GetCoinRates(coin *coins.Coin, buyWall bool) (map[string]m
 }
 
 // GetCoinToCoinRates will return the rates from a crypto to a crypto using the exchanges data
-func (rs *RateSevice) GetCoinToCoinRates(coinFrom *coins.Coin, coinTo *coins.Coin) (rate float64, err error) {
+func (rs *RateSevice) GetCoinToCoinRates(coinFrom *coins.Coin, coinTo *coins.Coin) (rate decimal.Decimal, err error) {
 	if coinFrom.Info.Tag == coinTo.Info.Tag {
 		return rate, config.ErrorNoC2CWithSameCoin
 	}
@@ -128,48 +126,48 @@ func (rs *RateSevice) GetCoinToCoinRates(coinFrom *coins.Coin, coinTo *coins.Coi
 	}
 	coinFromRates, err := rs.GetCoinRates(coinFrom, false)
 	if err != nil {
-		return 0, err
+		return decimal.Zero, err
 	}
 	coinToRates, err := rs.GetCoinRates(coinTo, false)
 	if err != nil {
-		return 0, err
+		return decimal.Zero, err
 	}
-	var coinFromUSDRate float64
+	var coinFromUSDRate decimal.Decimal
 	for code, rate := range coinFromRates {
 		if code == "USD" {
 			coinFromUSDRate = rate.Rate
 		}
 	}
-	var coinToUSDRate float64
+	var coinToUSDRate decimal.Decimal
 	for code, rate := range coinToRates {
 		if code == "USD" {
 			coinToUSDRate = rate.Rate
 		}
 	}
-	return toFixed(coinFromUSDRate/coinToUSDRate, 6), nil
+	return coinFromUSDRate.DivRound(coinToUSDRate, 6), nil
 }
 
-func (rs *RateSevice) GetCoinLiquidity(coin *coins.Coin) (float64, error) {
+func (rs *RateSevice) GetCoinLiquidity(coin *coins.Coin) (decimal.Decimal, error) {
 	coinWalls, err := rs.GetCoinOrdersWall(coin)
 	if err != nil {
-		return 0, err
+		return decimal.Zero, err
 	}
 	orderWall := coinWalls["sell"]
-	var liquidity float64
+	var liquidity decimal.Decimal
 	for _, order := range orderWall {
-		liquidity += order.Amount * order.Price.ToNormalUnit()
+		liquidity.Add(order.Amount.Mul(order.Price))
 	}
 	btcRates, err := rs.GetBtcRates()
 	if err != nil {
-		return 0, err
+		return decimal.Zero, err
 	}
-	var btcUSDRate float64
+	var btcUSDRate decimal.Decimal
 	for code, rate := range btcRates {
 		if code == "USD" {
 			btcUSDRate = rate.Rate
 		}
 	}
-	return toFixed(liquidity*btcUSDRate, 8), err
+	return liquidity.Mul(btcUSDRate).Round(8), err
 }
 
 // GetCoinToCoinRatesWithAmount is used to get the rates from crypto to crypto using a specified amount to convert
@@ -177,8 +175,8 @@ func (rs *RateSevice) GetCoinToCoinRatesWithAmount(coinFrom *coins.Coin, coinTo 
 	if coinFrom.Info.Tag == coinTo.Info.Tag {
 		return obol.CoinToCoinWithAmountResponse{}, config.ErrorNoC2CWithSameCoin
 	}
-	amountRequested := toFixed(amountReq, 6)
-	if amountRequested <= 0 {
+	amountRequested := decimal.NewFromFloat(amountReq).Round(6)
+	if amountRequested.LessThanOrEqual(decimal.Zero) {
 		return obol.CoinToCoinWithAmountResponse{}, errors.New("amount must be greater than 0")
 	}
 	var coinWall []models.MarketOrder
@@ -189,7 +187,7 @@ func (rs *RateSevice) GetCoinToCoinRatesWithAmount(coinFrom *coins.Coin, coinTo 
 		}
 		coinWall = coinToWalls["buy"]
 		for i := 0; i < len(coinWall); i++ {
-			coinWall[i].Amount *= coinWall[i].Price.ToNormalUnit()
+			coinWall[i].Amount.Mul(coinWall[i].Price)
 		}
 	} else {
 		coinFromWalls, err := rs.GetCoinOrdersWall(coinFrom)
@@ -205,22 +203,22 @@ func (rs *RateSevice) GetCoinToCoinRatesWithAmount(coinFrom *coins.Coin, coinTo 
 	}
 
 	var rates [][]float64
-	var percentageSum float64
+	var percentageSum decimal.Decimal
 	for _, order := range coinWall {
-		percentage := toFixed(order.Amount/amountReq, 6)
-		percentageSum += percentage
+		percentage := order.Amount.DivRound(amountRequested, 6)
+		percentageSum.Add(percentage)
 		var orderArr []float64
-		if percentageSum > 1 {
-			exceed := percentageSum - 1
-			rest := percentage - exceed
-			orderArr = []float64{order.Amount, order.Price.ToNormalUnit(), toFixed(rest, 6)}
-			percentageSum -= exceed
+		if percentageSum.GreaterThan(decimal.NewFromInt(1)) {
+			exceed := percentageSum.Sub(decimal.NewFromInt(1))
+			rest := percentage.Sub(exceed)
+			orderArr = []float64{order.Amount, order.Price, toFixed(rest, 6)}
+			percentageSum.Sub(exceed)
 		} else {
-			orderArr = []float64{order.Amount, order.Price.ToNormalUnit(), percentage}
+			orderArr = []float64{order.Amount, order.Price, percentage}
 		}
 		rates = append(rates, orderArr)
-		amountParsed -= order.Amount
-		if amountParsed <= 0 {
+		amountParsed.Sub(order.Amount)
+		if amountParsed.LessThanOrEqual(decimal.Zero) {
 			break
 		}
 	}
@@ -257,6 +255,8 @@ func (rs *RateSevice) GetCoinOrdersWall(coin *coins.Coin) (orders map[string][]m
 		service = rs.BinanceService
 	case "folgory":
 		service = rs.FolgoryService
+	case "lukki":
+		service = rs.LukkiService
 	case "hitbtc":
 		service = rs.HitBTCService
 	case "bittrex":
@@ -287,6 +287,8 @@ func (rs *RateSevice) GetCoinOrdersWall(coin *coins.Coin) (orders map[string][]m
 			fallBackService = rs.BinanceService
 		case "folgory":
 			fallBackService = rs.FolgoryService
+		case "lukki":
+			fallBackService = rs.LukkiService
 		case "hitbtc":
 			fallBackService = rs.HitBTCService
 		case "bittrex":
@@ -351,13 +353,10 @@ func (rs *RateSevice) GetBtcRates() (map[string]models.RateV2, error) {
 	}
 	btcRate, err := rs.GetBtcEURRate()
 	for code, rate := range rs.FiatRates.Rates {
-		newRate, err := amount.NewAmount(rate * btcRate)
-		if err != nil {
-			return nil, err
-		}
+		newRate := decimal.NewFromFloat(rate * btcRate)
 		rate := models.RateV2{
 			Name: models.FixerRatesNames[code],
-			Rate: newRate.ToNormalUnit(),
+			Rate: newRate,
 		}
 		rates[code] = rate
 	}
@@ -395,13 +394,4 @@ func (rs *RateSevice) LoadFiatRates() error {
 		LastUpdated: time.Now(),
 	}
 	return nil
-}
-
-func round(num float64) int {
-	return int(num + math.Copysign(0.5, num))
-}
-
-func toFixed(num float64, precision int) float64 {
-	output := math.Pow(10, float64(precision))
-	return float64(round(num*output)) / output
 }

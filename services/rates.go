@@ -3,7 +3,6 @@ package services
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"io/ioutil"
 	"os"
 	"strconv"
@@ -192,7 +191,7 @@ func (rs *RateSevice) GetCoinToCoinRatesWithAmount(coinFrom *coins.Coin, coinTo 
 		}
 		coinWall = coinToWalls["buy"]
 		for i := 0; i < len(coinWall); i++ {
-			coinWall[i].Amount.Mul(coinWall[i].Price)
+			coinWall[i].Amount = coinWall[i].Amount.Mul(coinWall[i].Price)
 		}
 	} else {
 		coinFromWalls, err := rs.GetCoinOrdersWall(coinFrom)
@@ -211,18 +210,18 @@ func (rs *RateSevice) GetCoinToCoinRatesWithAmount(coinFrom *coins.Coin, coinTo 
 	var percentageSum decimal.Decimal
 	for _, order := range coinWall {
 		percentage := order.Amount.DivRound(amountRequested, 6)
-		percentageSum.Add(percentage)
+		percentageSum = percentageSum.Add(percentage)
 		var orderArr []decimal.Decimal
 		if percentageSum.GreaterThan(decimal.NewFromInt(1)) {
 			exceed := percentageSum.Sub(decimal.NewFromInt(1))
 			rest := percentage.Sub(exceed)
 			orderArr = []decimal.Decimal{order.Amount, order.Price, rest.Round(6)}
-			percentageSum.Sub(exceed)
+			percentageSum = percentageSum.Sub(exceed)
 		} else {
 			orderArr = []decimal.Decimal{order.Amount, order.Price, percentage}
 		}
 		rates = append(rates, orderArr)
-		amountParsed.Sub(order.Amount)
+		amountParsed = amountParsed.Sub(order.Amount)
 		if amountParsed.LessThanOrEqual(decimal.Zero) {
 			break
 		}
@@ -230,8 +229,8 @@ func (rs *RateSevice) GetCoinToCoinRatesWithAmount(coinFrom *coins.Coin, coinTo 
 	amountParsed = amountRequested
 	var AvrPrice decimal.Decimal
 	for _, rateFloat := range rates {
-		AvrPrice.Add(rateFloat[1].Mul(rateFloat[2]))
-		amountParsed.Sub(rateFloat[0])
+		AvrPrice = AvrPrice.Add(rateFloat[1].Mul(rateFloat[2]))
+		amountParsed = amountParsed.Sub(rateFloat[0])
 		if amountParsed.LessThanOrEqual(decimal.Zero) {
 			break
 		}
@@ -249,7 +248,7 @@ func (rs *RateSevice) GetCoinToCoinRatesWithAmount(coinFrom *coins.Coin, coinTo 
 		rate.AveragePrice, _ = AvrPrice.DivRound(decimal.NewFromFloat(rateConv), 8).Float64()
 	}
 	amount := decimal.NewFromFloat(rate.AveragePrice)
-	amount.Mul(amountRequested)
+	amount = amount.Mul(amountRequested)
 	rate.Amount, _ = amount.Float64()
 	return rate, err
 }

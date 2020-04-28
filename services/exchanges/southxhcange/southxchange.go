@@ -38,22 +38,16 @@ func (s *Service) CoinMarketOrders(coin string) (orders map[string][]models.Mark
 	var buyOrders []models.MarketOrder
 	var sellOrders []models.MarketOrder
 	for _, order := range Response.BuyOrders {
-		price := order.Price
-		am := order.Amount
-		priceConv := decimal.NewFromFloat(price)
 		newOrder := models.MarketOrder{
-			Price:  priceConv,
-			Amount: am,
+			Price:  decimal.NewFromFloat(order.Price),
+			Amount: decimal.NewFromFloat(order.Amount),
 		}
 		sellOrders = append(sellOrders, newOrder)
 	}
 	for _, order := range Response.SellOrders {
-		price := order.Price
-		priceConv := decimal.NewFromFloat(price)
-		am := order.Amount
 		newOrder := models.MarketOrder{
-			Price:  priceConv,
-			Amount: am,
+			Price:  decimal.NewFromFloat(order.Price),
+			Amount: decimal.NewFromFloat(order.Amount),
 		}
 		buyOrders = append(buyOrders, newOrder)
 	}

@@ -202,19 +202,19 @@ func (rs *RateSevice) GetCoinToCoinRatesWithAmount(coinFrom *coins.Coin, coinTo 
 		return obol.CoinToCoinWithAmountResponse{}, err
 	}
 
-	var rates [][]float64
+	var rates [][]decimal.Decimal
 	var percentageSum decimal.Decimal
 	for _, order := range coinWall {
 		percentage := order.Amount.DivRound(amountRequested, 6)
 		percentageSum.Add(percentage)
-		var orderArr []float64
+		var orderArr []decimal.Decimal
 		if percentageSum.GreaterThan(decimal.NewFromInt(1)) {
 			exceed := percentageSum.Sub(decimal.NewFromInt(1))
 			rest := percentage.Sub(exceed)
-			orderArr = []float64{order.Amount, order.Price, toFixed(rest, 6)}
+			orderArr = []decimal.Decimal{order.Amount, order.Price, rest.Round(6)}
 			percentageSum.Sub(exceed)
 		} else {
-			orderArr = []float64{order.Amount, order.Price, percentage}
+			orderArr = []decimal.Decimal{order.Amount, order.Price, percentage}
 		}
 		rates = append(rates, orderArr)
 		amountParsed.Sub(order.Amount)
@@ -223,27 +223,27 @@ func (rs *RateSevice) GetCoinToCoinRatesWithAmount(coinFrom *coins.Coin, coinTo 
 		}
 	}
 	amountParsed = amountRequested
-	var AvrPrice float64
+	var AvrPrice decimal.Decimal
 	for _, rateFloat := range rates {
-		AvrPrice += rateFloat[1] * rateFloat[2]
-		amountParsed -= rateFloat[0]
-		if amountParsed <= 0 {
+		AvrPrice.Add(rateFloat[1].Mul(rateFloat[2]))
+		amountParsed.Sub(rateFloat[0])
+		if amountParsed.LessThanOrEqual(decimal.Zero) {
 			break
 		}
 	}
 	var rate obol.CoinToCoinWithAmountResponse
 	if coinTo.Info.Tag == "BTC" {
-		rate.AveragePrice = toFixed(AvrPrice, 8)
+		rate.AveragePrice = AvrPrice.Round(8)
 	} else if coinFrom.Info.Tag == "BTC" {
-		rate.AveragePrice = toFixed(1.0/AvrPrice, 8)
+		rate.AveragePrice = decimal.NewFromInt(1).DivRound(AvrPrice, 8)
 	} else {
 		rateConv, err := rs.GetCoinToCoinRates(coinTo, btcData)
 		if err != nil {
 			return rate, err
 		}
-		rate.AveragePrice = toFixed(AvrPrice/rateConv, 8)
+		rate.AveragePrice = AvrPrice.DivRound(rateConv, 8)
 	}
-	rate.Amount = rate.AveragePrice * amountRequested
+	rate.Amount = rate.AveragePrice.Mul(amountRequested)
 	return rate, err
 }
 

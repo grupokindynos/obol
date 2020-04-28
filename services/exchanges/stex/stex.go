@@ -63,55 +63,56 @@ func (s *Service) CoinMarketOrders(coin string) (orders map[string][]models.Mark
 	var buyOrders []models.MarketOrder
 	var sellOrders []models.MarketOrder
 	for _, order := range Response.Data.Ask {
-		var priceConv decimal.Decimal
+		var price float64
 		if value == "819" {
-			price, err := strconv.ParseFloat(order.Price, 64)
+			price, err = strconv.ParseFloat(order.Price, 64)
 			if err != nil {
 				return nil, err
 			}
-			priceConv = decimal.NewFromFloat(price * ethPrice)
+			price = price * ethPrice
 		} else {
-			price, err := strconv.ParseFloat(order.Price, 64)
+			price, err = strconv.ParseFloat(order.Price, 64)
 			if err != nil {
 				return nil, err
 			}
-			priceConv = decimal.NewFromFloat(price * ethPrice)
 		}
-		am, _ := strconv.ParseFloat(order.Amount, 64)
+		am, err := strconv.ParseFloat(order.Amount, 64)
+		if err != nil {
+			return nil, err
+		}
 		newOrder := models.MarketOrder{
-			Price:  priceConv,
-			Amount: am,
+			Price:  decimal.NewFromFloat(price),
+			Amount: decimal.NewFromFloat(am),
 		}
 		sellOrders = append(sellOrders, newOrder)
 	}
 	for _, order := range Response.Data.Bid {
-		var priceConv decimal.Decimal
+		var price float64
 		if value == "819" {
-			price, err := strconv.ParseFloat(order.Price, 64)
+			price, err = strconv.ParseFloat(order.Price, 64)
 			if err != nil {
 				return nil, err
 			}
-			priceConv = decimal.NewFromFloat(price)
+			price = price * ethPrice
 		} else {
-			price, err := strconv.ParseFloat(order.Price, 64)
+			price, err = strconv.ParseFloat(order.Price, 64)
 			if err != nil {
 				return nil, err
 			}
-			priceConv = decimal.NewFromFloat(price)
 		}
 		am, _ := strconv.ParseFloat(order.Amount, 64)
-		sort.Slice(buyOrders, func(i, j int) bool {
-			return buyOrders[i].Price.GreaterThan(buyOrders[j].Price)
-		})
-		sort.Slice(sellOrders, func(i, j int) bool {
-			return sellOrders[i].Price.LessThan(sellOrders[j].Price)
-		})
 		newOrder := models.MarketOrder{
-			Price:  priceConv,
-			Amount: am,
+			Price:  decimal.NewFromFloat(price),
+			Amount: decimal.NewFromFloat(am),
 		}
 		buyOrders = append(buyOrders, newOrder)
 	}
+	sort.Slice(buyOrders, func(i, j int) bool {
+		return buyOrders[i].Price.GreaterThan(buyOrders[j].Price)
+	})
+	sort.Slice(sellOrders, func(i, j int) bool {
+		return sellOrders[i].Price.LessThan(sellOrders[j].Price)
+	})
 	orders["buy"] = buyOrders
 	orders["sell"] = sellOrders
 	return orders, err

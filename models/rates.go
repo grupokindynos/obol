@@ -25,9 +25,9 @@ type RateV2 struct {
 
 // Rate is the struct to homologue exchange rate responses
 type Rate struct {
-	Code string  `json:"code"`
-	Name string  `json:"name"`
-	Rate float64 `json:"rate"`
+	Code string          `json:"code"`
+	Name string          `json:"name"`
+	Rate decimal.Decimal `json:"rate"`
 }
 
 // FixerRates is the structure of the FixerRates response

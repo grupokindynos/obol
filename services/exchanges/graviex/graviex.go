@@ -43,14 +43,13 @@ func (s *Service) CoinMarketOrders(coin string) (orders map[string][]models.Mark
 		if err != nil {
 			return orders, config.ErrorRequestTimeout
 		}
-		priceConv := decimal.NewFromFloat(price)
 		am, err := strconv.ParseFloat(order[1], 64)
 		if err != nil {
 			return orders, config.ErrorRequestTimeout
 		}
 		newOrder := models.MarketOrder{
-			Price:  priceConv,
-			Amount: am,
+			Price:  decimal.NewFromFloat(price),
+			Amount: decimal.NewFromFloat(am),
 		}
 		buyOrders = append(buyOrders, newOrder)
 	}
@@ -59,14 +58,13 @@ func (s *Service) CoinMarketOrders(coin string) (orders map[string][]models.Mark
 		if err != nil {
 			return orders, config.ErrorRequestTimeout
 		}
-		priceConv := decimal.NewFromFloat(price)
 		am, err := strconv.ParseFloat(order[1], 64)
 		if err != nil {
 			return orders, config.ErrorRequestTimeout
 		}
 		newOrder := models.MarketOrder{
-			Price:  priceConv,
-			Amount: am,
+			Price:  decimal.NewFromFloat(price),
+			Amount: decimal.NewFromFloat(am),
 		}
 		sellOrders = append(sellOrders, newOrder)
 	}

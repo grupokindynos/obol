@@ -1,6 +1,10 @@
 package main
 
 import (
+	"net/http"
+	"os"
+	"time"
+
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/grupokindynos/obol/controllers"
@@ -14,6 +18,7 @@ import (
 	"github.com/grupokindynos/obol/services/exchanges/graviex"
 	"github.com/grupokindynos/obol/services/exchanges/hitbtc"
 	"github.com/grupokindynos/obol/services/exchanges/kucoin"
+	"github.com/grupokindynos/obol/services/exchanges/lukki"
 	"github.com/grupokindynos/obol/services/exchanges/novaexchange"
 	"github.com/grupokindynos/obol/services/exchanges/southxhcange"
 	"github.com/grupokindynos/obol/services/exchanges/stex"
@@ -22,9 +27,6 @@ import (
 	"github.com/ulule/limiter/v3"
 	mgin "github.com/ulule/limiter/v3/drivers/middleware/gin"
 	"github.com/ulule/limiter/v3/drivers/store/memory"
-	"net/http"
-	"os"
-	"time"
 )
 
 func init() {
@@ -69,6 +71,7 @@ func ApplyRoutes(r *gin.Engine) {
 		BitrueService:       bitrue.InitService(),
 		FolgoryService:      folgory.InitService(),
 		HitBTCService:       hitbtc.InitService(),
+		LukkiService:        lukki.InitService(),
 	}
 	err := rateService.LoadFiatRates()
 	if err != nil {

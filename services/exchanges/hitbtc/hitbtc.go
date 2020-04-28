@@ -2,13 +2,14 @@ package hitbtc
 
 import (
 	"encoding/json"
-	"github.com/grupokindynos/obol/config"
-	"github.com/grupokindynos/obol/models"
-	"github.com/grupokindynos/obol/models/exchanges"
-	"github.com/olympus-protocol/ogen/utils/amount"
 	"io/ioutil"
 	"strconv"
 	"strings"
+
+	"github.com/grupokindynos/obol/config"
+	"github.com/grupokindynos/obol/models"
+	"github.com/grupokindynos/obol/models/exchanges"
+	"github.com/shopspring/decimal"
 )
 
 // Service is a common structure for a exchange
@@ -28,33 +29,43 @@ func (s *Service) CoinMarketOrders(coin string) (orders map[string][]models.Mark
 		_ = res.Body.Close()
 	}()
 	contents, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		return orders, config.ErrorRequestTimeout
+	}
 	var Response exchanges.HitBTCRate
 	err = json.Unmarshal(contents, &Response)
+	if err != nil {
+		return orders, config.ErrorRequestTimeout
+	}
 	var buyOrders []models.MarketOrder
 	var sellOrders []models.MarketOrder
 	for _, order := range Response[strings.ToUpper(coin)+"BTC"].Ask {
-		price, _ := strconv.ParseFloat(order.Price, 64)
-		priceConv, err := amount.NewAmount(price)
+		price, err := strconv.ParseFloat(order.Price, 64)
 		if err != nil {
-			return nil, err
+			return orders, config.ErrorRequestTimeout
 		}
-		am, _ := strconv.ParseFloat(order.Size, 64)
+		am, err := strconv.ParseFloat(order.Size, 64)
+		if err != nil {
+			return orders, config.ErrorRequestTimeout
+		}
 		newOrder := models.MarketOrder{
-			Price:  priceConv,
-			Amount: am,
+			Price:  decimal.NewFromFloat(price),
+			Amount: decimal.NewFromFloat(am),
 		}
 		sellOrders = append(sellOrders, newOrder)
 	}
 	for _, order := range Response[strings.ToUpper(coin)+"BTC"].Bid {
-		price, _ := strconv.ParseFloat(order.Price, 64)
-		priceConv, err := amount.NewAmount(price)
+		price, err := strconv.ParseFloat(order.Price, 64)
 		if err != nil {
-			return nil, err
+			return orders, config.ErrorRequestTimeout
 		}
-		am, _ := strconv.ParseFloat(order.Size, 64)
+		am, err := strconv.ParseFloat(order.Size, 64)
+		if err != nil {
+			return orders, config.ErrorRequestTimeout
+		}
 		newOrder := models.MarketOrder{
-			Price:  priceConv,
-			Amount: am,
+			Price:  decimal.NewFromFloat(price),
+			Amount: decimal.NewFromFloat(am),
 		}
 		buyOrders = append(buyOrders, newOrder)
 	}

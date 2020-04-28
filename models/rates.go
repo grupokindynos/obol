@@ -1,14 +1,14 @@
 package models
 
 import (
-	"github.com/olympus-protocol/ogen/utils/amount"
+	"github.com/shopspring/decimal"
 	"time"
 )
 
 // MarketOrder is just a simple struct to homologue the exchange responses
 type MarketOrder struct {
-	Amount float64           `json:"amount"`
-	Price  amount.AmountType `json:"price"`
+	Amount decimal.Decimal `json:"amount"`
+	Price  decimal.Decimal `json:"price"`
 }
 
 // FiatRates is the struct to handle internally the OpenRate response

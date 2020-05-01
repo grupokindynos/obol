@@ -38,7 +38,6 @@ func (s *Service) CoinMarketOrders(coin string) (orders map[string][]models.Mark
 	if err != nil {
 		return orders, config.ErrorRequestTimeout
 	}
-	fmt.Println(Response)
 	var buyOrders []models.MarketOrder
 	var sellOrders []models.MarketOrder
 	for _, order := range Response.Data.Asks {

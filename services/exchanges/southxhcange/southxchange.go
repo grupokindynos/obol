@@ -59,7 +59,6 @@ func (s *Service) CoinMarketOrders(coin string) (orders map[string][]models.Mark
 	sort.Slice(sellOrders, func(i, j int) bool {
 		return sellOrders[i].Price.GreaterThan(sellOrders[j].Price)
 	})
-	fmt.Println(sellOrders)
 	orders["buy"] = buyOrders
 	orders["sell"] = sellOrders
 	return orders, err

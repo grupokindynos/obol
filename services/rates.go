@@ -364,12 +364,20 @@ func (rs *RateSevice) GetBtcRates() (map[string]models.RateV2, error) {
 		return rs.BtcRates.Rates, nil
 	}
 	btcRate, err := rs.GetBtcEURRate()
-	for code, rate := range rs.FiatRates.Rates {
-		newRate := decimal.NewFromFloat(rate * btcRate)
-		float, _ := newRate.Float64()
-		rate := models.RateV2{
-			Name: models.FixerRatesNames[code],
-			Rate: float,
+	for code, r := range rs.FiatRates.Rates {
+		var rate models.RateV2
+		if code == "BTC" {
+			rate = models.RateV2{
+				Name: models.FixerRatesNames[code],
+				Rate: 1,
+			}
+		} else {
+			newRate := decimal.NewFromFloat(r * btcRate)
+			float, _ := newRate.Float64()
+			rate = models.RateV2{
+				Name: models.FixerRatesNames[code],
+				Rate: float,
+			}
 		}
 		rates[code] = rate
 	}

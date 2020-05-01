@@ -2,7 +2,6 @@ package kucoin
 
 import (
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
 	"sort"
 	"strconv"

@@ -2,7 +2,6 @@ package southxhcange
 
 import (
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
 	"sort"
 	"strings"

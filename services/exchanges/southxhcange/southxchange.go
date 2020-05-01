@@ -2,7 +2,9 @@ package southxhcange
 
 import (
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
+	"sort"
 	"strings"
 
 	"github.com/grupokindynos/obol/config"
@@ -51,6 +53,13 @@ func (s *Service) CoinMarketOrders(coin string) (orders map[string][]models.Mark
 		}
 		buyOrders = append(buyOrders, newOrder)
 	}
+	sort.Slice(buyOrders, func(i, j int) bool {
+		return buyOrders[i].Price.LessThan(buyOrders[j].Price)
+	})
+	sort.Slice(sellOrders, func(i, j int) bool {
+		return sellOrders[i].Price.GreaterThan(sellOrders[j].Price)
+	})
+	fmt.Println(sellOrders)
 	orders["buy"] = buyOrders
 	orders["sell"] = sellOrders
 	return orders, err

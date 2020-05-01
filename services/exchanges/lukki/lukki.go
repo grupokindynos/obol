@@ -76,10 +76,10 @@ func (s *Service) CoinMarketOrders(coin string) (orders map[string][]models.Mark
 	// For buy order is from lowest to biggest and for sell orders is from biggest to lowest based on the price.
 
 	sort.Slice(buyOrders, func(i, j int) bool {
-		return buyOrders[i].Price.GreaterThan(buyOrders[j].Price)
+		return buyOrders[i].Price.LessThan(buyOrders[j].Price)
 	})
 	sort.Slice(sellOrders, func(i, j int) bool {
-		return sellOrders[i].Price.LessThan(sellOrders[j].Price)
+		return sellOrders[i].Price.GreaterThan(sellOrders[j].Price)
 	})
 	orders["buy"] = buyOrders
 	orders["sell"] = sellOrders

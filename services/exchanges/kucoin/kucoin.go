@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"sort"
 	"strconv"
 	"strings"
 
@@ -70,6 +71,12 @@ func (s *Service) CoinMarketOrders(coin string) (orders map[string][]models.Mark
 		}
 		buyOrders = append(buyOrders, newOrder)
 	}
+	sort.Slice(buyOrders, func(i, j int) bool {
+		return buyOrders[i].Price.LessThan(buyOrders[j].Price)
+	})
+	sort.Slice(sellOrders, func(i, j int) bool {
+		return sellOrders[i].Price.GreaterThan(sellOrders[j].Price)
+	})
 	orders["buy"] = buyOrders
 	orders["sell"] = sellOrders
 	return orders, err

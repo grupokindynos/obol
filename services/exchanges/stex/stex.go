@@ -62,7 +62,7 @@ func (s *Service) CoinMarketOrders(coin string) (orders map[string][]models.Mark
 	}
 	var buyOrders []models.MarketOrder
 	var sellOrders []models.MarketOrder
-	for _, order := range Response.Data.Ask {
+	for _, order := range Response.Data.Bid {
 		var price float64
 		if value == "819" {
 			price, err = strconv.ParseFloat(order.Price, 64)
@@ -86,7 +86,7 @@ func (s *Service) CoinMarketOrders(coin string) (orders map[string][]models.Mark
 		}
 		sellOrders = append(sellOrders, newOrder)
 	}
-	for _, order := range Response.Data.Bid {
+	for _, order := range Response.Data.Ask {
 		var price float64
 		if value == "819" {
 			price, err = strconv.ParseFloat(order.Price, 64)
@@ -108,10 +108,10 @@ func (s *Service) CoinMarketOrders(coin string) (orders map[string][]models.Mark
 		buyOrders = append(buyOrders, newOrder)
 	}
 	sort.Slice(buyOrders, func(i, j int) bool {
-		return buyOrders[i].Price.GreaterThan(buyOrders[j].Price)
+		return buyOrders[i].Price.LessThan(buyOrders[j].Price)
 	})
 	sort.Slice(sellOrders, func(i, j int) bool {
-		return sellOrders[i].Price.LessThan(sellOrders[j].Price)
+		return sellOrders[i].Price.GreaterThan(sellOrders[j].Price)
 	})
 	orders["buy"] = buyOrders
 	orders["sell"] = sellOrders

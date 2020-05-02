@@ -14,12 +14,10 @@ import (
 	"github.com/grupokindynos/obol/services/exchanges/bitrue"
 	"github.com/grupokindynos/obol/services/exchanges/bittrex"
 	"github.com/grupokindynos/obol/services/exchanges/crex24"
-	"github.com/grupokindynos/obol/services/exchanges/folgory"
 	"github.com/grupokindynos/obol/services/exchanges/graviex"
 	"github.com/grupokindynos/obol/services/exchanges/hitbtc"
 	"github.com/grupokindynos/obol/services/exchanges/kucoin"
 	"github.com/grupokindynos/obol/services/exchanges/lukki"
-	"github.com/grupokindynos/obol/services/exchanges/novaexchange"
 	"github.com/grupokindynos/obol/services/exchanges/southxhcange"
 	"github.com/grupokindynos/obol/services/exchanges/stex"
 	_ "github.com/heroku/x/hmetrics/onload"
@@ -65,11 +63,9 @@ func ApplyRoutes(r *gin.Engine) {
 		Crex24Service:       crex24.InitService(),
 		StexService:         stex.InitService(),
 		SouthXChangeService: southxhcange.InitService(),
-		NovaExchangeService: novaexchange.InitService(),
 		KuCoinService:       kucoin.InitService(),
 		GraviexService:      graviex.InitService(),
 		BitrueService:       bitrue.InitService(),
-		FolgoryService:      folgory.InitService(),
 		HitBTCService:       hitbtc.InitService(),
 		LukkiService:        lukki.InitService(),
 	}

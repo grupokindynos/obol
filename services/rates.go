@@ -8,7 +8,6 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/grupokindynos/obol/services/exchanges/folgory"
 	"github.com/grupokindynos/obol/services/exchanges/hitbtc"
 	"github.com/grupokindynos/obol/services/exchanges/lukki"
 	"github.com/shopspring/decimal"
@@ -25,7 +24,6 @@ import (
 	"github.com/grupokindynos/obol/services/exchanges/crex24"
 	"github.com/grupokindynos/obol/services/exchanges/graviex"
 	"github.com/grupokindynos/obol/services/exchanges/kucoin"
-	"github.com/grupokindynos/obol/services/exchanges/novaexchange"
 	"github.com/grupokindynos/obol/services/exchanges/southxhcange"
 	"github.com/grupokindynos/obol/services/exchanges/stex"
 	"github.com/joho/godotenv"
@@ -61,11 +59,9 @@ type RateSevice struct {
 	Crex24Service       *crex24.Service
 	StexService         *stex.Service
 	SouthXChangeService *southxhcange.Service
-	NovaExchangeService *novaexchange.Service
 	KuCoinService       *kucoin.Service
 	GraviexService      *graviex.Service
 	BitrueService       *bitrue.Service
-	FolgoryService      *folgory.Service
 	HitBTCService       *hitbtc.Service
 	LukkiService        *lukki.Service
 }
@@ -265,8 +261,6 @@ func (rs *RateSevice) GetCoinOrdersWall(coin *coins.Coin) (orders map[string][]m
 	switch coin.Rates.Exchange {
 	case "binance":
 		service = rs.BinanceService
-	case "folgory":
-		service = rs.FolgoryService
 	case "lukki":
 		service = rs.LukkiService
 	case "hitbtc":
@@ -281,8 +275,6 @@ func (rs *RateSevice) GetCoinOrdersWall(coin *coins.Coin) (orders map[string][]m
 		service = rs.KuCoinService
 	case "graviex":
 		service = rs.GraviexService
-	case "novaexchange":
-		service = rs.NovaExchangeService
 	case "stex":
 		service = rs.StexService
 	case "southxchange":
@@ -297,8 +289,6 @@ func (rs *RateSevice) GetCoinOrdersWall(coin *coins.Coin) (orders map[string][]m
 		switch coin.Rates.FallBackExchange {
 		case "binance":
 			fallBackService = rs.BinanceService
-		case "folgory":
-			fallBackService = rs.FolgoryService
 		case "lukki":
 			fallBackService = rs.LukkiService
 		case "hitbtc":
@@ -313,8 +303,6 @@ func (rs *RateSevice) GetCoinOrdersWall(coin *coins.Coin) (orders map[string][]m
 			fallBackService = rs.GraviexService
 		case "crex24":
 			fallBackService = rs.Crex24Service
-		case "novaexchange":
-			fallBackService = rs.NovaExchangeService
 		case "stex":
 			fallBackService = rs.StexService
 		case "southxchange":

@@ -41,7 +41,7 @@ func (s *Service) CoinMarketOrders(coin string) (orders map[string][]models.Mark
 	var buyOrders []models.MarketOrder
 	var sellOrders []models.MarketOrder
 	for _, order := range Response.Data {
-		if order.Direction == 0 {
+		if order.Direction == 1 {
 			price, err := strconv.ParseFloat(order.Price, 64)
 			if err != nil {
 				return orders, config.ErrorRequestTimeout

@@ -103,6 +103,11 @@ func (rs *RateSevice) GetCoinRates(coin *coins.Coin, buyWall bool) (map[string]m
 		} else {
 			rate.Rate, _ = rateNum.Round(6).Float64()
 		}
+
+		// temporal solution
+		if coin.Rates.Exchange == "mock" {
+			rate.Rate = 0
+		}
 		rates[code] = rate
 	}
 	return rates, err
@@ -279,7 +284,11 @@ func (rs *RateSevice) GetCoinOrdersWall(coin *coins.Coin) (orders map[string][]m
 		service = rs.StexService
 	case "southxchange":
 		service = rs.SouthXChangeService
+	case "mock":
+		service = rs.BinanceService
+		coin.Info.Tag = "ETH"
 	}
+
 	if service == nil {
 		return nil, config.ErrorNoServiceForCoin
 	}

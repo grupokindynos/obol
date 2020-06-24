@@ -44,7 +44,7 @@ func (s *Service) CoinMarketOrders(coin string) (orders map[string][]models.Mark
 			Price:  decimal.NewFromFloat(price),
 			Amount: decimal.NewFromFloat(order.Quantity),
 		}
-		sellOrders = append(sellOrders, newOrder)
+		buyOrders = append(buyOrders, newOrder)
 	}
 	for _, order := range Response.Result.Buy {
 		price := order.Rate
@@ -52,7 +52,7 @@ func (s *Service) CoinMarketOrders(coin string) (orders map[string][]models.Mark
 			Price:  decimal.NewFromFloat(price),
 			Amount: decimal.NewFromFloat(order.Quantity),
 		}
-		buyOrders = append(buyOrders, newOrder)
+		sellOrders = append(sellOrders, newOrder)
 	}
 	sort.Slice(buyOrders, func(i, j int) bool {
 		return buyOrders[i].Price.LessThan(buyOrders[j].Price)

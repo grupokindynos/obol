@@ -81,12 +81,15 @@ func (rs *RateSevice) GetCoinRates(coin *coins.Coin, buyWall bool) (map[string]m
 		return rates, err
 	}
 	var orders []models.MarketOrder
+	var orderPrice decimal.Decimal
 	if buyWall {
 		orders = ratesWall["buy"]
+		orderPrice = orders[len(orders) - 1].Price
 	} else {
 		orders = ratesWall["sell"]
+		orderPrice = orders[0].Price
 	}
-	orderPrice := orders[0].Price
+
 	for code, singleRate := range btcRates {
 		rateDec := decimal.NewFromFloat(singleRate.Rate)
 		rate := models.RateV2{

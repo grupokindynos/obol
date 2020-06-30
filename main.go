@@ -104,6 +104,7 @@ func ApplyRoutes(r *gin.Engine) {
 		rateCtrl := controllers.RateController{RateService: rateService, RatesCache: make(map[string]controllers.CoinRate)}
 		apiv2.GET("simple/:coin", rateCtrl.GetCoinRatesV2)
 		apiv2.GET("complexfiat/:fromcoin/:tocoin", rateCtrl.GetCoinToFIATRate)
+		apiv2.GET("node/:coin", rateCtrl.GetNodeProvider)
 
 	}
 	r.NoRoute(func(c *gin.Context) {

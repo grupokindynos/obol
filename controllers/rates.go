@@ -8,6 +8,7 @@ import (
 	"github.com/grupokindynos/obol/config"
 	"github.com/grupokindynos/obol/models"
 	"github.com/grupokindynos/obol/services"
+	"os"
 	"sort"
 	"strconv"
 	"strings"
@@ -157,6 +158,21 @@ func (rc *RateController) GetCoinLiquidity(c *gin.Context) {
 		return
 	}
 	responses.GlobalResponseError(liquidity, err, c)
+	return
+}
+
+func (rc *RateController) GetNodeProvider(c *gin.Context) {
+	coin := c.Param("coin")
+	coinConfig, err := coinfactory.GetCoin(coin)
+	if err != nil {
+		responses.GlobalResponseError(nil, err, c)
+		return
+	}
+	if coinConfig.Info.Token {
+		coinConfig.Info.Tag = "ETH"
+	}
+	provider := os.Getenv(coinConfig.Info.Tag + "_NODE")
+	responses.GlobalResponseError(provider, err, c)
 	return
 }
 

@@ -84,7 +84,7 @@ func (rs *RateSevice) GetCoinRates(coin *coins.Coin, buyWall bool) (map[string]m
 	var orderPrice decimal.Decimal
 	if buyWall {
 		orders = ratesWall["buy"]
-		orderPrice = orders[len(orders) - 1].Price
+		orderPrice = orders[len(orders)-1].Price
 	} else {
 		orders = ratesWall["sell"]
 		orderPrice = orders[0].Price
@@ -266,6 +266,7 @@ func (rs *RateSevice) GetCoinToCoinRatesWithAmount(coinFrom *coins.Coin, coinTo 
 // GetCoinOrdersWall will return the buy/sell orders from selected or fallback exchange
 func (rs *RateSevice) GetCoinOrdersWall(coin *coins.Coin) (orders map[string][]models.MarketOrder, err error) {
 	var service Exchange
+	coinTag := coin.Info.Tag
 	switch coin.Rates.Exchange {
 	case "binance":
 		service = rs.BinanceService
@@ -289,13 +290,13 @@ func (rs *RateSevice) GetCoinOrdersWall(coin *coins.Coin) (orders map[string][]m
 		service = rs.SouthXChangeService
 	case "mock":
 		service = rs.BinanceService
-		coin.Info.Tag = "ETH"
+		coinTag = "ETH"
 	}
 
 	if service == nil {
 		return nil, config.ErrorNoServiceForCoin
 	}
-	orders, err = service.CoinMarketOrders(coin.Info.Tag)
+	orders, err = service.CoinMarketOrders(coinTag)
 	if err != nil {
 		var fallBackService Exchange
 		switch coin.Rates.FallBackExchange {

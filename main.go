@@ -107,6 +107,7 @@ func ApplyRoutes(r *gin.Engine) {
 		apiv2.GET("node/:coin", rateCtrl.GetNodeProvider)
 
 	}
+	
 	r.NoRoute(func(c *gin.Context) {
 		c.String(http.StatusNotFound, "Not Found")
 	})

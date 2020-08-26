@@ -186,7 +186,7 @@ func (rs *RateSevice) GetCoinToCoinRatesWithAmount(coinFrom *coins.Coin, coinTo 
 	amountRequested := decimal.NewFromFloat(amountReq).Round(6)
 	margin, _ := strconv.ParseFloat(os.Getenv("SAFETY_MARGIN"), 64)
 
-	amountRequested.Mul(decimal.NewFromFloat(margin))
+	amountRequested = amountRequested.Mul(decimal.NewFromFloat(margin))
 
 	if amountRequested.LessThanOrEqual(decimal.Zero) {
 		return obol.CoinToCoinWithAmountResponse{}, errors.New("amount must be greater than 0")

@@ -184,6 +184,10 @@ func (rs *RateSevice) GetCoinToCoinRatesWithAmount(coinFrom *coins.Coin, coinTo 
 		return obol.CoinToCoinWithAmountResponse{}, config.ErrorNoC2CWithSameCoin
 	}
 	amountRequested := decimal.NewFromFloat(amountReq).Round(6)
+	margin, _ := strconv.ParseFloat(os.Getenv("SAFETY_MARGIN"), 64)
+
+	amountRequested.Mul(decimal.NewFromFloat(margin))
+
 	if amountRequested.LessThanOrEqual(decimal.Zero) {
 		return obol.CoinToCoinWithAmountResponse{}, errors.New("amount must be greater than 0")
 	}
@@ -204,6 +208,7 @@ func (rs *RateSevice) GetCoinToCoinRatesWithAmount(coinFrom *coins.Coin, coinTo 
 		}
 		coinWall = coinFromWalls["sell"]
 	}
+
 	amountParsed := amountRequested
 	btcData, err := coinFactory.GetCoin("BTC")
 	if err != nil {
@@ -213,6 +218,8 @@ func (rs *RateSevice) GetCoinToCoinRatesWithAmount(coinFrom *coins.Coin, coinTo 
 	var rates [][]decimal.Decimal
 	var percentageSum decimal.Decimal
 	for _, order := range coinWall {
+		// Calculates the percentage of the order's total amount an order from the coin wall represents and continues
+		// looping through the coinWall until the added percentage is 100%. Stops when parsedAmount is zero or less.
 		percentage := order.Amount.DivRound(amountRequested, 6)
 		percentageSum = percentageSum.Add(percentage)
 		var orderArr []decimal.Decimal
@@ -231,9 +238,9 @@ func (rs *RateSevice) GetCoinToCoinRatesWithAmount(coinFrom *coins.Coin, coinTo 
 		}
 	}
 	amountParsed = amountRequested
-	var AvrPrice decimal.Decimal
+	var avrPrice decimal.Decimal
 	for _, rateFloat := range rates {
-		AvrPrice = AvrPrice.Add(rateFloat[1].Mul(rateFloat[2]))
+		avrPrice = avrPrice.Add(rateFloat[1].Mul(rateFloat[2]))
 		amountParsed = amountParsed.Sub(rateFloat[0])
 		if amountParsed.LessThanOrEqual(decimal.Zero) {
 			break
@@ -241,9 +248,9 @@ func (rs *RateSevice) GetCoinToCoinRatesWithAmount(coinFrom *coins.Coin, coinTo 
 	}
 	var rate obol.CoinToCoinWithAmountResponse
 	if coinTo.Info.Tag == "BTC" {
-		rate.AveragePrice, _ = AvrPrice.Round(8).Float64()
+		rate.AveragePrice, _ = avrPrice.Round(8).Float64()
 	} else if coinFrom.Info.Tag == "BTC" {
-		rate.AveragePrice, _ = decimal.NewFromInt(1).DivRound(AvrPrice, 8).Float64()
+		rate.AveragePrice, _ = decimal.NewFromInt(1).DivRound(avrPrice, 8).Float64()
 	} else if coinFrom.Info.Token && coinFrom.Info.Tag != "ETH" {
 		rateConv, err := rs.GetCoinToCoinRates(coinFrom, coinTo)
 		if err != nil {
@@ -255,10 +262,10 @@ func (rs *RateSevice) GetCoinToCoinRatesWithAmount(coinFrom *coins.Coin, coinTo 
 		if err != nil {
 			return rate, err
 		}
-		rate.AveragePrice, _ = AvrPrice.DivRound(decimal.NewFromFloat(rateConv), 8).Float64()
+		rate.AveragePrice, _ = avrPrice.DivRound(decimal.NewFromFloat(rateConv), 8).Float64()
 	}
 	amount := decimal.NewFromFloat(rate.AveragePrice)
-	amount = amount.Mul(amountRequested)
+	amount = amount.Mul(amountRequested.Div(decimal.NewFromFloat(margin))) // Adjusts the original requested amount by dividing fy the safety margin value.
 	rate.Amount, _ = amount.Float64()
 	return rate, err
 }

@@ -16,6 +16,11 @@ import (
 // Service is a common structure for a exchange
 type Service struct {
 	MarketRateURL string
+	StableAsset string
+}
+
+func (s *Service) CoinMarketOrdersV2(coin string) (orders map[string][]models.MarketOrder, ordersStable map[string][]models.MarketOrder, err error) {
+	panic("implement me")
 }
 
 // CoinMarketOrders is used to get the market sell and buy wall from a coin
@@ -90,6 +95,7 @@ func (s *Service) CoinMarketOrders(coin string) (orders map[string][]models.Mark
 func InitService() *Service {
 	s := &Service{
 		MarketRateURL: "https://api.binance.com/api/v1/depth?symbol=",
+		StableAsset: "USDT",
 	}
 	return s
 }

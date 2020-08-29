@@ -19,6 +19,11 @@ type Service struct {
 	BaseRateURL   string
 	MarketRateURL string
 	TickerID      map[string]string
+	StableAsset string
+}
+
+func (s *Service) CoinMarketOrdersV2(coin string) (orders map[string][]models.MarketOrder, ordersStable map[string][]models.MarketOrder, err error) {
+	panic("implement me")
 }
 
 // CoinMarketOrders is used to get the market sell and buy wall from a coin
@@ -156,6 +161,7 @@ func InitService() *Service {
 		BaseRateURL:   "https://api3.stex.com/public/ticker/",
 		MarketRateURL: "https://api3.stex.com/public/orderbook/",
 		TickerID:      tickerID,
+		StableAsset: "USDT",
 	}
 	return s
 }

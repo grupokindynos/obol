@@ -105,6 +105,7 @@ func ApplyRoutes(r *gin.Engine) {
 		apiv2.GET("simple/:coin", rateCtrl.GetCoinRatesV2)
 		apiv2.GET("complexfiat/:fromcoin/:tocoin", rateCtrl.GetCoinToFIATRate)
 		apiv2.GET("node/:coin", rateCtrl.GetNodeProvider)
+		apiv2.GET("complex/:fromcoin/:tocoin", rateCtrl.GetCoinRateFromCoinToCoinV2)
 
 	}
 	

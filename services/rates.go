@@ -3,6 +3,7 @@ package services
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io/ioutil"
 	"os"
 	"strconv"
@@ -42,6 +43,7 @@ const (
 //Exchange is the interface to make sure all exchange services have the same properties
 type Exchange interface {
 	CoinMarketOrders(coin string) (orders map[string][]models.MarketOrder, err error)
+	CoinMarketOrdersV2(coin string) (orders map[string][]models.MarketOrder, ordersStable map[string][]models.MarketOrder, err error)
 }
 
 type BtcRates struct {
@@ -270,8 +272,239 @@ func (rs *RateSevice) GetCoinToCoinRatesWithAmount(coinFrom *coins.Coin, coinTo 
 	return rate, err
 }
 
+// TODO Southxchange specific coins
+func (rs *RateSevice) GetCoinToCoinRatesWithAmountByExchange(coinFrom *coins.Coin, coinTo *coins.Coin, amountReq float64) (obol.CoinToCoinWithAmountResponse, error) {
+	if coinFrom.Info.Tag == coinTo.Info.Tag {
+		return obol.CoinToCoinWithAmountResponse{}, config.ErrorNoC2CWithSameCoin
+	}
+	amountRequested := decimal.NewFromFloat(amountReq).Round(6)
+	margin, _ := strconv.ParseFloat(os.Getenv("SAFETY_MARGIN"), 64)
+
+	amountRequested = amountRequested.Mul(decimal.NewFromFloat(margin))
+
+	if amountRequested.LessThanOrEqual(decimal.Zero) {
+		return obol.CoinToCoinWithAmountResponse{}, errors.New("amount must be greater than 0")
+	}
+	var coinWall []models.MarketOrder
+	var coinWallStable []models.MarketOrder // Holds the exchanges used stablecoin's orders info
+	if coinFrom.Info.Tag == "BTC" {
+		coinToWalls, err := rs.GetCoinOrdersWall(coinTo)
+		if err != nil {
+			return obol.CoinToCoinWithAmountResponse{}, err
+		}
+		coinWall = coinToWalls["buy"]
+		for i := 0; i < len(coinWall); i++ {
+			coinWall[i].Amount = coinWall[i].Amount.Mul(coinWall[i].Price)
+		}
+	} else {
+		coinFromWalls, coinFromStableWalls, err := rs.GetCoinOrdersWallsV2(coinFrom)
+		if err != nil {
+			return obol.CoinToCoinWithAmountResponse{}, err
+		}
+		coinWall = coinFromWalls["sell"]
+		coinWallStable = coinFromStableWalls["buy"]
+	}
+
+	fmt.Println(coinWallStable)
+
+
+	amountParsed := amountRequested
+	btcData, err := coinFactory.GetCoin("BTC")
+	if err != nil {
+		return obol.CoinToCoinWithAmountResponse{}, err
+	}
+
+	var rates [][]decimal.Decimal
+	var percentageSum decimal.Decimal
+	for _, order := range coinWall {
+		// Calculates the percentage of the order's total amount an order from the coin wall represents and continues
+		// looping through the coinWall until the added percentage is 100%. Stops when parsedAmount is zero or less.
+		percentage := order.Amount.DivRound(amountRequested, 6)
+		percentageSum = percentageSum.Add(percentage)
+		var orderArr []decimal.Decimal
+		if percentageSum.GreaterThan(decimal.NewFromInt(1)) {
+			exceed := percentageSum.Sub(decimal.NewFromInt(1))
+			rest := percentage.Sub(exceed)
+			orderArr = []decimal.Decimal{order.Amount, order.Price, rest.Round(6)}
+			percentageSum = percentageSum.Sub(exceed)
+		} else {
+			orderArr = []decimal.Decimal{order.Amount, order.Price, percentage}
+		}
+		rates = append(rates, orderArr)
+		amountParsed = amountParsed.Sub(order.Amount)
+		if amountParsed.LessThanOrEqual(decimal.Zero) {
+			break
+		}
+	}
+	amountParsed = amountRequested
+	var avrPrice decimal.Decimal
+	for _, rateFloat := range rates {
+		avrPrice = avrPrice.Add(rateFloat[1].Mul(rateFloat[2]))
+		amountParsed = amountParsed.Sub(rateFloat[0])
+		if amountParsed.LessThanOrEqual(decimal.Zero) {
+			break
+		}
+	}
+	var rate obol.CoinToCoinWithAmountResponse
+	if coinTo.Info.Tag == "BTC" {
+		rate.AveragePrice, _ = avrPrice.Round(8).Float64()
+	} else if coinFrom.Info.Tag == "BTC" {
+		rate.AveragePrice, _ = decimal.NewFromInt(1).DivRound(avrPrice, 8).Float64()
+	} else if coinFrom.Info.Token && coinFrom.Info.Tag != "ETH" {
+		rateConv, err := rs.GetCoinToCoinRates(coinFrom, coinTo)
+		if err != nil {
+			return rate, err
+		}
+		rate.AveragePrice = rateConv
+	} else {
+		rateConv, err := rs.GetCoinToCoinRates(coinTo, btcData)
+		if err != nil {
+			return rate, err
+		}
+		rate.AveragePrice, _ = avrPrice.DivRound(decimal.NewFromFloat(rateConv), 8).Float64()
+	}
+	amount := decimal.NewFromFloat(rate.AveragePrice)
+	amount = amount.Mul(amountRequested.Div(decimal.NewFromFloat(margin))) // Adjusts the original requested amount by dividing fy the safety margin value.
+	rate.Amount, _ = amount.Float64()
+	return rate, err
+}
+
 // GetCoinOrdersWall will return the buy/sell orders from selected or fallback exchange
 func (rs *RateSevice) GetCoinOrdersWall(coin *coins.Coin) (orders map[string][]models.MarketOrder, err error) {
+	var service Exchange
+	coinTag := coin.Info.Tag
+	switch coin.Rates.Exchange {
+	case "binance":
+		service = rs.BinanceService
+	case "lukki":
+		service = rs.LukkiService
+	case "hitbtc":
+		service = rs.HitBTCService
+	case "bittrex":
+		service = rs.BittrexService
+	case "bitrue":
+		service = rs.BitrueService
+	case "crex24":
+		service = rs.Crex24Service
+	case "kucoin":
+		service = rs.KuCoinService
+	case "graviex":
+		service = rs.GraviexService
+	case "stex":
+		service = rs.StexService
+	case "southxchange":
+		service = rs.SouthXChangeService
+	case "mock":
+		service = rs.BinanceService
+		coinTag = "ETH"
+	}
+
+	if service == nil {
+		return nil, config.ErrorNoServiceForCoin
+	}
+	orders, err = service.CoinMarketOrders(coinTag)
+	if err != nil {
+		var fallBackService Exchange
+		switch coin.Rates.FallBackExchange {
+		case "binance":
+			fallBackService = rs.BinanceService
+		case "lukki":
+			fallBackService = rs.LukkiService
+		case "hitbtc":
+			fallBackService = rs.HitBTCService
+		case "bittrex":
+			fallBackService = rs.BittrexService
+		case "bitrue":
+			fallBackService = rs.BitrueService
+		case "kucoin":
+			fallBackService = rs.KuCoinService
+		case "graviex":
+			fallBackService = rs.GraviexService
+		case "crex24":
+			fallBackService = rs.Crex24Service
+		case "stex":
+			fallBackService = rs.StexService
+		case "southxchange":
+			fallBackService = rs.SouthXChangeService
+		}
+		if fallBackService == nil {
+			return nil, config.ErrorNoFallBackServiceForCoin
+		}
+		fallBackOrders, err := fallBackService.CoinMarketOrders(coin.Info.Tag)
+		return fallBackOrders, err
+	}
+	return orders, err
+}
+
+// GetCoinOrdersWall will return the buy/sell orders from selected or fallback exchange and
+func (rs *RateSevice) GetCoinOrdersWallsV2(coin *coins.Coin) (orders map[string][]models.MarketOrder, ordersStable map[string][]models.MarketOrder, err error) {
+	var service Exchange
+	coinTag := coin.Info.Tag
+	switch coin.Rates.Exchange {
+	case "binance":
+		service = rs.BinanceService
+	case "lukki":
+		service = rs.LukkiService
+	case "hitbtc":
+		service = rs.HitBTCService
+	case "bittrex":
+		service = rs.BittrexService
+	case "bitrue":
+		service = rs.BitrueService
+	case "crex24":
+		service = rs.Crex24Service
+	case "kucoin":
+		service = rs.KuCoinService
+	case "graviex":
+		service = rs.GraviexService
+	case "stex":
+		service = rs.StexService
+	case "southxchange":
+		service = rs.SouthXChangeService
+	case "mock":
+		service = rs.BinanceService
+		coinTag = "ETH"
+	}
+
+	if service == nil {
+		return nil, nil, config.ErrorNoServiceForCoin
+	}
+	orders, ordersStable, err = service.CoinMarketOrdersV2(coinTag)
+	if err != nil {
+		var fallBackService Exchange
+		switch coin.Rates.FallBackExchange {
+		case "binance":
+			fallBackService = rs.BinanceService
+		case "lukki":
+			fallBackService = rs.LukkiService
+		case "hitbtc":
+			fallBackService = rs.HitBTCService
+		case "bittrex":
+			fallBackService = rs.BittrexService
+		case "bitrue":
+			fallBackService = rs.BitrueService
+		case "kucoin":
+			fallBackService = rs.KuCoinService
+		case "graviex":
+			fallBackService = rs.GraviexService
+		case "crex24":
+			fallBackService = rs.Crex24Service
+		case "stex":
+			fallBackService = rs.StexService
+		case "southxchange":
+			fallBackService = rs.SouthXChangeService
+		}
+		if fallBackService == nil {
+			return nil, nil, config.ErrorNoFallBackServiceForCoin
+		}
+		fallBackOrders, fallbackOrdersStable, err := fallBackService.CoinMarketOrdersV2(coin.Info.Tag)
+		return fallBackOrders, fallbackOrdersStable, err
+	}
+	return orders, ordersStable, err
+}
+
+// GetCoinOrdersWall will return the buy/sell orders from selected or fallback exchange
+func (rs *RateSevice) GetCoinOrdersWallSouth(coin *coins.Coin) (orders map[string][]models.MarketOrder, err error) {
 	var service Exchange
 	coinTag := coin.Info.Tag
 	switch coin.Rates.Exchange {

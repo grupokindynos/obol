@@ -86,6 +86,7 @@ func ApplyRoutes(r *gin.Engine) {
 		api.GET("simple/:coin", rateCtrl.GetCoinRates)
 		api.GET("complex/:fromcoin/:tocoin", rateCtrl.GetCoinRateFromCoinToCoin)
 		api.GET("liquidity/:coin", rateCtrl.GetCoinLiquidity)
+		api.GET("rate/margin/:fromCoin/:toCoin", rateCtrl.GetCoinToCoinRateWithExchangeMargin)
 
 	}
 	r.NoRoute(func(c *gin.Context) {

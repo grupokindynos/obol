@@ -2,7 +2,6 @@ package services
 
 import (
 	"encoding/json"
-	"errors"
 	"io/ioutil"
 	"os"
 	"strconv"
@@ -67,7 +66,7 @@ type RateSevice struct {
 }
 
 // GetCoinRates is the main function to get the rates of a coin using the OpenRates structure
-func (rs *RateSevice) GetCoinRates(coin *coins.Coin, buyWall bool) (map[string]models.RateV2, error) {
+func (rs *RateSevice) GetCoinRates(coin *coins.Coin, exchange string, buyWall bool) (map[string]models.RateV2, error) {
 	rates := make(map[string]models.RateV2)
 	btcRates, err := rs.GetBtcRates()
 	if err != nil {
@@ -76,7 +75,7 @@ func (rs *RateSevice) GetCoinRates(coin *coins.Coin, buyWall bool) (map[string]m
 	if coin.Info.Tag == "BTC" {
 		return btcRates, nil
 	}
-	ratesWall, err := rs.GetCoinOrdersWall(coin)
+	ratesWall, err := rs.GetCoinOrdersWall(coin, exchange)
 	if err != nil {
 		return rates, err
 	}
@@ -117,23 +116,23 @@ func (rs *RateSevice) GetCoinRates(coin *coins.Coin, buyWall bool) (map[string]m
 }
 
 // GetCoinToCoinRates will return the rates from a crypto to a crypto using the exchanges data
-func (rs *RateSevice) GetCoinToCoinRates(coinFrom *coins.Coin, coinTo *coins.Coin) (rate float64, err error) {
+func (rs *RateSevice) GetCoinToCoinRates(coinFrom *coins.Coin, coinTo *coins.Coin, exchange string) (rate float64, err error) {
 	if coinFrom.Info.Tag == coinTo.Info.Tag {
 		return rate, config.ErrorNoC2CWithSameCoin
 	}
 	if coinTo.Info.Tag == "BTC" {
-		coinRates, err := rs.GetCoinRates(coinFrom, false)
+		coinRates, err := rs.GetCoinRates(coinFrom, exchange, false)
 		for code, rate := range coinRates {
 			if code == "BTC" {
 				return rate.Rate, err
 			}
 		}
 	}
-	coinFromRates, err := rs.GetCoinRates(coinFrom, false)
+	coinFromRates, err := rs.GetCoinRates(coinFrom, exchange, false)
 	if err != nil {
 		return 0, err
 	}
-	coinToRates, err := rs.GetCoinRates(coinTo, false)
+	coinToRates, err := rs.GetCoinRates(coinTo, exchange, false)
 	if err != nil {
 		return 0, err
 	}
@@ -153,8 +152,8 @@ func (rs *RateSevice) GetCoinToCoinRates(coinFrom *coins.Coin, coinTo *coins.Coi
 	return floatConvert, nil
 }
 
-func (rs *RateSevice) GetCoinLiquidity(coin *coins.Coin) (float64, error) {
-	coinWalls, err := rs.GetCoinOrdersWall(coin)
+func (rs *RateSevice) GetCoinLiquidity(coin *coins.Coin, exchange string) (float64, error) {
+	coinWalls, err := rs.GetCoinOrdersWall(coin, exchange)
 	if err != nil {
 		return 0, err
 	}
@@ -179,21 +178,14 @@ func (rs *RateSevice) GetCoinLiquidity(coin *coins.Coin) (float64, error) {
 }
 
 // GetCoinToCoinRatesWithAmount is used to get the rates from crypto to crypto using a specified amount to convert
-func (rs *RateSevice) GetCoinToCoinRatesWithAmount(coinFrom *coins.Coin, coinTo *coins.Coin, amountReq float64) (obol.CoinToCoinWithAmountResponse, error) {
+func (rs *RateSevice) GetCoinToCoinRatesWithAmount(coinFrom *coins.Coin, coinTo *coins.Coin, amountReq float64, exchange string) (obol.CoinToCoinWithAmountResponse, error) {
 	if coinFrom.Info.Tag == coinTo.Info.Tag {
 		return obol.CoinToCoinWithAmountResponse{}, config.ErrorNoC2CWithSameCoin
 	}
 	amountRequested := decimal.NewFromFloat(amountReq).Round(6)
-	margin, _ := strconv.ParseFloat(os.Getenv("SAFETY_MARGIN"), 64)
-
-	amountRequested = amountRequested.Mul(decimal.NewFromFloat(margin))
-
-	if amountRequested.LessThanOrEqual(decimal.Zero) {
-		return obol.CoinToCoinWithAmountResponse{}, errors.New("amount must be greater than 0")
-	}
 	var coinWall []models.MarketOrder
 	if coinFrom.Info.Tag == "BTC" {
-		coinToWalls, err := rs.GetCoinOrdersWall(coinTo)
+		coinToWalls, err := rs.GetCoinOrdersWall(coinTo, exchange)
 		if err != nil {
 			return obol.CoinToCoinWithAmountResponse{}, err
 		}
@@ -202,7 +194,7 @@ func (rs *RateSevice) GetCoinToCoinRatesWithAmount(coinFrom *coins.Coin, coinTo 
 			coinWall[i].Amount = coinWall[i].Amount.Mul(coinWall[i].Price)
 		}
 	} else {
-		coinFromWalls, err := rs.GetCoinOrdersWall(coinFrom)
+		coinFromWalls, err := rs.GetCoinOrdersWall(coinFrom, exchange)
 		if err != nil {
 			return obol.CoinToCoinWithAmountResponse{}, err
 		}
@@ -252,29 +244,34 @@ func (rs *RateSevice) GetCoinToCoinRatesWithAmount(coinFrom *coins.Coin, coinTo 
 	} else if coinFrom.Info.Tag == "BTC" {
 		rate.AveragePrice, _ = decimal.NewFromInt(1).DivRound(avrPrice, 8).Float64()
 	} else if coinFrom.Info.Token && coinFrom.Info.Tag != "ETH" {
-		rateConv, err := rs.GetCoinToCoinRates(coinFrom, coinTo)
+		rateConv, err := rs.GetCoinToCoinRates(coinFrom, coinTo, exchange)
 		if err != nil {
 			return rate, err
 		}
 		rate.AveragePrice = rateConv
 	} else {
-		rateConv, err := rs.GetCoinToCoinRates(coinTo, btcData)
+		rateConv, err := rs.GetCoinToCoinRates(coinTo, btcData, exchange)
 		if err != nil {
 			return rate, err
 		}
 		rate.AveragePrice, _ = avrPrice.DivRound(decimal.NewFromFloat(rateConv), 8).Float64()
 	}
-	amount := decimal.NewFromFloat(rate.AveragePrice)
-	amount = amount.Mul(amountRequested.Div(decimal.NewFromFloat(margin))) // Adjusts the original requested amount by dividing fy the safety margin value.
+	amount := decimal.NewFromFloat(rate.AveragePrice).Mul(amountRequested)
 	rate.Amount, _ = amount.Float64()
 	return rate, err
 }
 
 // GetCoinOrdersWall will return the buy/sell orders from selected or fallback exchange
-func (rs *RateSevice) GetCoinOrdersWall(coin *coins.Coin) (orders map[string][]models.MarketOrder, err error) {
+func (rs *RateSevice) GetCoinOrdersWall(coin *coins.Coin, exchange string) (orders map[string][]models.MarketOrder, err error) {
 	var service Exchange
 	coinTag := coin.Info.Tag
-	switch coin.Rates.Exchange {
+	preferredExchange := ""
+	if exchange != "" {
+		preferredExchange = exchange
+	} else {
+		preferredExchange = coin.Rates.Exchange
+	}
+	switch preferredExchange {
 	case "binance":
 		service = rs.BinanceService
 	case "lukki":

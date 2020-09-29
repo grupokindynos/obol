@@ -21,7 +21,7 @@ type Service struct {
 // CoinMarketOrders is used to get the market sell and buy wall from a coin
 func (s *Service) CoinMarketOrders(coin string) (orders map[string][]models.MarketOrder, err error) {
 	orders = make(map[string][]models.MarketOrder)
-	res, err := config.HttpClient.Get(s.MarketRateURL + strings.ToLower(coin) + "btc")
+	res, err := config.HttpClient.Get(s.MarketRateURL + strings.ToLower(coin) + "btc&limit=100")
 	if err != nil {
 		return orders, config.ErrorRequestTimeout
 	}
@@ -83,7 +83,7 @@ func (s *Service) CoinMarketOrders(coin string) (orders map[string][]models.Mark
 // InitService is used to safely start a new service reference.
 func InitService() *Service {
 	s := &Service{
-		MarketRateURL: "https://graviex.net:443//api/v3/depth.json?market=",
+		MarketRateURL: "https://graviex.net:443//webapi/v3/depth.json?market=",
 	}
 	return s
 }

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/grupokindynos/obol/services/exchanges/bithumb"
 	"net/http"
 	"os"
 	"time"
@@ -68,6 +69,7 @@ func ApplyRoutes(r *gin.Engine) {
 		BitrueService:       bitrue.InitService(),
 		HitBTCService:       hitbtc.InitService(),
 		LukkiService:        lukki.InitService(),
+		BithumbService:      bithumb.InitService(),
 	}
 	err := rateService.LoadFiatRates()
 	if err != nil {
@@ -108,7 +110,7 @@ func ApplyRoutes(r *gin.Engine) {
 		apiv2.GET("node/:coin", rateCtrl.GetNodeProvider)
 
 	}
-	
+
 	r.NoRoute(func(c *gin.Context) {
 		c.String(http.StatusNotFound, "Not Found")
 	})

@@ -2,6 +2,7 @@ package services
 
 import (
 	"encoding/json"
+	"github.com/grupokindynos/obol/services/exchanges/bithumb"
 	"io/ioutil"
 	"os"
 	"strconv"
@@ -63,6 +64,7 @@ type RateSevice struct {
 	BitrueService       *bitrue.Service
 	HitBTCService       *hitbtc.Service
 	LukkiService        *lukki.Service
+	BithumbService      *bithumb.Service
 }
 
 // GetCoinRates is the main function to get the rates of a coin using the OpenRates structure
@@ -295,6 +297,8 @@ func (rs *RateSevice) GetCoinOrdersWall(coin *coins.Coin, exchange string) (orde
 	case "mock":
 		service = rs.BinanceService
 		coinTag = "ETH"
+	case "bithumb":
+		service = rs.BithumbService
 	}
 
 	if service == nil {

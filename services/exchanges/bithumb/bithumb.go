@@ -19,7 +19,7 @@ type Service struct {
 
 // CoinMarketOrders is used to get the market sell and buy wall from a coin
 func (s *Service) CoinMarketOrders(coin string) (orders map[string][]models.MarketOrder, err error) {
-	orders, err = s.getMarketInfo(strings.ToUpper(coin) + "-BTC")
+	orders, err = s.getMarketInfo(strings.ToUpper(coin) + "-USDT")
 	if err != nil {
 		return orders, err
 	}
@@ -47,7 +47,7 @@ func (s *Service) getMarketInfo(market string) (orders map[string][]models.Marke
 	}
 	var buyOrders []models.MarketOrder
 	var sellOrders []models.MarketOrder
-	for _, order := range Response.Asks {
+	for _, order := range Response.Data.Asks {
 		strMarhshalPrice, err := json.Marshal(order[0])
 		if err != nil {
 			return nil, err
@@ -79,7 +79,7 @@ func (s *Service) getMarketInfo(market string) (orders map[string][]models.Marke
 		}
 		sellOrders = append(sellOrders, newOrder)
 	}
-	for _, order := range Response.Bids {
+	for _, order := range Response.Data.Bids {
 		strMarhshalPrice, err := json.Marshal(order[0])
 		if err != nil {
 			return nil, err
@@ -119,6 +119,7 @@ func (s *Service) getMarketInfo(market string) (orders map[string][]models.Marke
 	})
 	orders["buy"] = buyOrders
 	orders["sell"] = sellOrders
+	return orders, nil
 }
 
 // InitService is used to safely start a new service reference.

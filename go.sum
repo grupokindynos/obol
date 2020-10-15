@@ -65,6 +65,8 @@ github.com/grupokindynos/common v0.0.0-20200826181559-a254d58ea8b9 h1:kFQyZf+SFd
 github.com/grupokindynos/common v0.0.0-20200826181559-a254d58ea8b9/go.mod h1:01s5/fk/NE85VAR6RiFfUWWiy/UnSBRLIltJCAu56Bw=
 github.com/grupokindynos/common v0.0.0-20200928174454-b1dec9550407 h1:tDVioerxTMGwrYiWfGFZDW0PuDMV3+F0jxJNZhhZwKA=
 github.com/grupokindynos/common v0.0.0-20200928174454-b1dec9550407/go.mod h1:01s5/fk/NE85VAR6RiFfUWWiy/UnSBRLIltJCAu56Bw=
+github.com/grupokindynos/common v0.0.0-20201014151310-04cd94a8381c h1:3rfpI4W64ts8UNPbFw2bqAuodyypmSavEgVlvgMVQ4g=
+github.com/grupokindynos/common v0.0.0-20201014151310-04cd94a8381c/go.mod h1:01s5/fk/NE85VAR6RiFfUWWiy/UnSBRLIltJCAu56Bw=
 github.com/heroku/heroku-go/v5 v5.1.0/go.mod h1:d+1QrZyjbnQJG1f8xIoVvMQRFLt3XRVZOdlm26Sr73U=
 github.com/heroku/rollrus v0.1.1/go.mod h1:B3MwEcr9nmf4xj0Sr5l9eSht7wLKMa1C+9ajgAU79ek=
 github.com/heroku/x v0.0.11 h1:sLdsUADcLAJywBnbZrouQuvOq7rqElCCc3518R75oUg=

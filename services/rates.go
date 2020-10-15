@@ -2,10 +2,13 @@ package services
 
 import (
 	"encoding/json"
+	"fmt"
+	"github.com/grupokindynos/obol/services/exchanges/birake"
 	"github.com/grupokindynos/obol/services/exchanges/bithumb"
 	"io/ioutil"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/grupokindynos/obol/services/exchanges/hitbtc"
@@ -65,6 +68,7 @@ type RateSevice struct {
 	HitBTCService       *hitbtc.Service
 	LukkiService        *lukki.Service
 	BithumbService      *bithumb.Service
+	BirakeService       *birake.Service
 }
 
 // GetCoinRates is the main function to get the rates of a coin using the OpenRates structure
@@ -76,6 +80,9 @@ func (rs *RateSevice) GetCoinRates(coin *coins.Coin, exchange string, buyWall bo
 	}
 	if coin.Info.Tag == "BTC" {
 		return btcRates, nil
+	}
+	if coin.Info.Tag == "XBTX"{
+		fmt.Println("xbtx found")
 	}
 	ratesWall, err := rs.GetCoinOrdersWall(coin, exchange)
 	if err != nil {
@@ -90,31 +97,62 @@ func (rs *RateSevice) GetCoinRates(coin *coins.Coin, exchange string, buyWall bo
 		orders = ratesWall["sell"]
 		orderPrice = orders[0].Price
 	}
+	if strings.ToUpper(coin.Info.Tag) == "GTH" {
+		// This handles coins with no BTC market, only stablecoin markets. Tested for USDT
+		usdRates, err := rs.GetUsdRates()
+		if err != nil {
+			return rates, err
+		}
+		for code, singleRate := range usdRates {
+			rateDec := decimal.NewFromFloat(singleRate.Rate)
+			rate := models.RateV2{
+				Name: singleRate.Name,
+			}
+			var rateNum decimal.Decimal
+			if coin.Info.Tag == "USDC" || coin.Info.Tag == "TUSD" || coin.Info.Tag == "USDT" {
+				rateNum = rateDec.Div(orderPrice)
+			} else {
+				rateNum = orderPrice.Mul(rateDec)
+			}
+			if code == "BTC" {
+				rate.Rate, _ = rateNum.Round(8).Float64()
+			} else {
+				rate.Rate, _ = rateNum.Round(6).Float64()
+			}
 
-	for code, singleRate := range btcRates {
-		rateDec := decimal.NewFromFloat(singleRate.Rate)
-		rate := models.RateV2{
-			Name: singleRate.Name,
+			// temporal solution
+			if coin.Rates.Exchange == "mock" {
+				rate.Rate = 0
+			}
+			rates[code] = rate
 		}
-		var rateNum decimal.Decimal
-		if coin.Info.Tag == "USDC" || coin.Info.Tag == "TUSD" || coin.Info.Tag == "USDT" {
-			rateNum = rateDec.Div(orderPrice)
-		} else {
-			rateNum = orderPrice.Mul(rateDec)
-		}
-		if code == "BTC" {
-			rate.Rate, _ = rateNum.Round(8).Float64()
-		} else {
-			rate.Rate, _ = rateNum.Round(6).Float64()
-		}
+		return rates, err
+	} else {
+		for code, singleRate := range btcRates {
+			rateDec := decimal.NewFromFloat(singleRate.Rate)
+			rate := models.RateV2{
+				Name: singleRate.Name,
+			}
+			var rateNum decimal.Decimal
+			if coin.Info.Tag == "USDC" || coin.Info.Tag == "TUSD" || coin.Info.Tag == "USDT" {
+				rateNum = rateDec.Div(orderPrice)
+			} else {
+				rateNum = orderPrice.Mul(rateDec)
+			}
+			if code == "BTC" {
+				rate.Rate, _ = rateNum.Round(8).Float64()
+			} else {
+				rate.Rate, _ = rateNum.Round(6).Float64()
+			}
 
-		// temporal solution
-		if coin.Rates.Exchange == "mock" {
-			rate.Rate = 0
+			// temporal solution
+			if coin.Rates.Exchange == "mock" {
+				rate.Rate = 0
+			}
+			rates[code] = rate
 		}
-		rates[code] = rate
+		return rates, err
 	}
-	return rates, err
 }
 
 // GetCoinToCoinRates will return the rates from a crypto to a crypto using the exchanges data
@@ -299,7 +337,10 @@ func (rs *RateSevice) GetCoinOrdersWall(coin *coins.Coin, exchange string) (orde
 		coinTag = "ETH"
 	case "bithumb":
 		service = rs.BithumbService
+	case "birake":
+		service = rs.BirakeService
 	}
+
 
 	if service == nil {
 		return nil, config.ErrorNoServiceForCoin
@@ -328,6 +369,8 @@ func (rs *RateSevice) GetCoinOrdersWall(coin *coins.Coin, exchange string) (orde
 			fallBackService = rs.StexService
 		case "southxchange":
 			fallBackService = rs.SouthXChangeService
+		case "birake":
+			service = rs.BirakeService
 		}
 		if fallBackService == nil {
 			return nil, config.ErrorNoFallBackServiceForCoin
@@ -341,6 +384,28 @@ func (rs *RateSevice) GetCoinOrdersWall(coin *coins.Coin, exchange string) (orde
 // GetBtcEURRate will return the price of BTC on EUR
 func (rs *RateSevice) GetBtcEURRate() (float64, error) {
 	res, err := config.HttpClient.Get("https://bitstamp.net/api/v2/ticker/btceur")
+	if err != nil {
+		return 0, config.ErrorRequestTimeout
+	}
+	defer func() {
+		_ = res.Body.Close()
+	}()
+	contents, _ := ioutil.ReadAll(res.Body)
+	var rate exchanges.BitstampRate
+	err = json.Unmarshal(contents, &rate)
+	if err != nil {
+		return 0, err
+	}
+	rateNum, err := strconv.ParseFloat(rate.Last, 64)
+	if err != nil {
+		return 0, err
+	}
+	return rateNum, err
+}
+
+// GetUSD-URRate will return the price of BTC on EUR
+func (rs *RateSevice) GetUsdEurRate() (float64, error) {
+	res, err := config.HttpClient.Get("https://bitstamp.net/api/v2/ticker/eurusd")
 	if err != nil {
 		return 0, config.ErrorRequestTimeout
 	}
@@ -382,6 +447,40 @@ func (rs *RateSevice) GetBtcRates() (map[string]models.RateV2, error) {
 			}
 		} else {
 			newRate := decimal.NewFromFloat(r * btcRate)
+			float, _ := newRate.Float64()
+			rate = models.RateV2{
+				Name: models.FixerRatesNames[code],
+				Rate: float,
+			}
+		}
+		rates[code] = rate
+	}
+	return rates, err
+}
+
+// TODO RATES FOR USDT GTH
+// GetUsdRates will return the USD rates using the OpenRates structure
+func (rs *RateSevice) GetUsdRates() (map[string]models.RateV2, error) {
+	rates := make(map[string]models.RateV2)
+	if rs.FiatRates.LastUpdated.Unix()+UpdateFiatRatesTimeFrame < time.Now().Unix() {
+		err := rs.LoadFiatRates()
+		if err != nil {
+			return nil, err
+		}
+	}
+	if rs.BtcRates.LastUpdated+UpdateBtcRatesTimeFrame > time.Now().Unix() {
+		return rs.BtcRates.Rates, nil
+	}
+	usdRate, err := rs.GetUsdEurRate()
+	for code, r := range rs.FiatRates.Rates {
+		var rate models.RateV2
+		if code == "BTC" {
+			rate = models.RateV2{
+				Name: models.FixerRatesNames[code],
+				Rate: 1,
+			}
+		} else {
+			newRate := decimal.NewFromFloat(r * usdRate)
 			float, _ := newRate.Float64()
 			rate = models.RateV2{
 				Name: models.FixerRatesNames[code],

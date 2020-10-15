@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/grupokindynos/obol/services/exchanges/birake"
 	"github.com/grupokindynos/obol/services/exchanges/bithumb"
 	"net/http"
 	"os"
@@ -70,6 +71,7 @@ func ApplyRoutes(r *gin.Engine) {
 		HitBTCService:       hitbtc.InitService(),
 		LukkiService:        lukki.InitService(),
 		BithumbService:      bithumb.InitService(),
+		BirakeService:       birake.InitService(),
 	}
 	err := rateService.LoadFiatRates()
 	if err != nil {

@@ -33,6 +33,7 @@ func (rc *RateController) GetCoinToFIATRate(c *gin.Context) {
 	fromcoin := c.Param("fromcoin")
 	tocoin := c.Param("tocoin")
 	tocoin = strings.ToUpper(tocoin)
+	exchange := c.Query("exchange")
 	fromCoinData, err := coinfactory.GetCoin(fromcoin)
 	if err != nil {
 		responses.GlobalResponseError(nil, err, c)
@@ -46,7 +47,7 @@ func (rc *RateController) GetCoinToFIATRate(c *gin.Context) {
 		responses.GlobalResponseError(nil, errors.New("FIAT coin not found"), c)
 		return
 	}
-	rates, err := rc.RateService.GetCoinRates(fromCoinData, false)
+	rates, err := rc.RateService.GetCoinRates(fromCoinData, exchange,false)
 	rc.RatesCache[fromCoinData.Info.Tag] = CoinRate{
 		LastUpdated: time.Now().Unix(),
 		Rates:       rates,
@@ -63,6 +64,7 @@ func (rc *RateController) GetCoinToFIATRate(c *gin.Context) {
 func (rc *RateController) GetCoinRatesV2(c *gin.Context) {
 	coin := c.Param("coin")
 	coinData, err := coinfactory.GetCoin(coin)
+	exchange := c.Query("exchange")
 	if err != nil {
 		responses.GlobalResponseError(nil, err, c)
 		return
@@ -71,7 +73,7 @@ func (rc *RateController) GetCoinRatesV2(c *gin.Context) {
 		responses.GlobalResponseError(rc.RatesCache[coinData.Info.Tag].Rates, err, c)
 		return
 	}
-	rates, err := rc.RateService.GetCoinRates(coinData, false)
+	rates, err := rc.RateService.GetCoinRates(coinData, exchange, false)
 	rc.RatesCache[coinData.Info.Tag] = CoinRate{
 		LastUpdated: time.Now().Unix(),
 		Rates:       rates,
@@ -83,6 +85,7 @@ func (rc *RateController) GetCoinRatesV2(c *gin.Context) {
 // GetCoinRates will return a rate map based on the selected coin
 func (rc *RateController) GetCoinRates(c *gin.Context) {
 	coin := c.Param("coin")
+	exchange := c.Query("exchange")
 	coinData, err := coinfactory.GetCoin(coin)
 	if err != nil {
 		responses.GlobalResponseError(nil, err, c)
@@ -96,7 +99,7 @@ func (rc *RateController) GetCoinRates(c *gin.Context) {
 		responses.GlobalResponseError(ratesV1, err, c)
 		return
 	}
-	rates, err := rc.RateService.GetCoinRates(coinData, false)
+	rates, err := rc.RateService.GetCoinRates(coinData, exchange,  false)
 	if err != nil {
 		responses.GlobalResponseError(nil, err, c)
 		return
@@ -118,6 +121,7 @@ func (rc *RateController) GetCoinRates(c *gin.Context) {
 func (rc *RateController) GetCoinRateFromCoinToCoin(c *gin.Context) {
 	fromcoin := c.Param("fromcoin")
 	tocoin := c.Param("tocoin")
+	exchange := c.Query("exchange")
 	fromCoinData, err := coinfactory.GetCoin(fromcoin)
 	if err != nil {
 		responses.GlobalResponseError(nil, err, c)
@@ -135,24 +139,73 @@ func (rc *RateController) GetCoinRateFromCoinToCoin(c *gin.Context) {
 			responses.GlobalResponseError(nil, config.ErrorInvalidAmountOnC2C, c)
 			return
 		}
-		rates, err := rc.RateService.GetCoinToCoinRatesWithAmount(fromCoinData, toCoinData, amountNum)
+		rates, err := rc.RateService.GetCoinToCoinRatesWithAmount(fromCoinData, toCoinData, amountNum, exchange)
 		responses.GlobalResponseError(rates, err, c)
 		return
 	}
-	rates, err := rc.RateService.GetCoinToCoinRates(fromCoinData, toCoinData)
+	rates, err := rc.RateService.GetCoinToCoinRates(fromCoinData, toCoinData, exchange)
 	responses.GlobalResponseError(rates, err, c)
 	return
 }
 
+func (rc *RateController) GetCoinToCoinRateWithExchangeMargin(c *gin.Context) {
+	fromCoin := c.Param("fromCoin")
+	toCoin := c.Param("toCoin")
+	exchange := c.Query("exchange")
+	amountStr := c.Query("amount")
+
+	if amountStr == "" {
+		responses.GlobalResponseError(nil, errors.New("missing parameter amount"), c)
+		return
+	}
+	if exchange == "" {
+		responses.GlobalResponseError(nil, errors.New("missing parameter exchange"), c)
+		return
+	}
+
+	fromCoinInfo, err := coinfactory.GetCoin(fromCoin)
+	if err != nil {
+		responses.GlobalResponseError(nil, err, c)
+		return
+	}
+	toCoinInfo, err := coinfactory.GetCoin(toCoin)
+	if err != nil {
+		responses.GlobalResponseError(nil, err, c)
+		return
+	}
+	amount, err := strconv.ParseFloat(amountStr, 64)
+	if err != nil {
+		responses.GlobalResponseError(nil, err, c)
+		return
+	}
+	rateMargin, err := getExchangeRateMargin(exchange)
+	if err != nil {
+		responses.GlobalResponseError(nil, err, c)
+		return
+	}
+	amount *= rateMargin
+	rate, err := rc.RateService.GetCoinToCoinRatesWithAmount(fromCoinInfo, toCoinInfo, amount, exchange)
+	if err != nil {
+		responses.GlobalResponseError(nil, err, c)
+		return
+	}
+
+	rate.Amount /= rateMargin
+	responses.GlobalResponse(rate, c)
+	return
+}
+
+
 // GetCoinLiquidity will return the liquidity available for the selected coin.
 func (rc *RateController) GetCoinLiquidity(c *gin.Context) {
 	coin := c.Param("coin")
+	exchange := c.Query("exchange")
 	coinConfig, err := coinfactory.GetCoin(coin)
 	if err != nil {
 		responses.GlobalResponseError(nil, err, c)
 		return
 	}
-	liquidity, err := rc.RateService.GetCoinLiquidity(coinConfig)
+	liquidity, err := rc.RateService.GetCoinLiquidity(coinConfig, exchange)
 	if err != nil {
 		responses.GlobalResponseError(nil, err, c)
 		return

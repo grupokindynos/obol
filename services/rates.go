@@ -2,10 +2,13 @@ package services
 
 import (
 	"encoding/json"
-	"errors"
+	"fmt"
+	"github.com/grupokindynos/obol/services/exchanges/birake"
+	"github.com/grupokindynos/obol/services/exchanges/bithumb"
 	"io/ioutil"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/grupokindynos/obol/services/exchanges/hitbtc"
@@ -64,10 +67,12 @@ type RateSevice struct {
 	BitrueService       *bitrue.Service
 	HitBTCService       *hitbtc.Service
 	LukkiService        *lukki.Service
+	BithumbService      *bithumb.Service
+	BirakeService       *birake.Service
 }
 
 // GetCoinRates is the main function to get the rates of a coin using the OpenRates structure
-func (rs *RateSevice) GetCoinRates(coin *coins.Coin, buyWall bool) (map[string]models.RateV2, error) {
+func (rs *RateSevice) GetCoinRates(coin *coins.Coin, exchange string, buyWall bool) (map[string]models.RateV2, error) {
 	rates := make(map[string]models.RateV2)
 	btcRates, err := rs.GetBtcRates()
 	if err != nil {
@@ -76,7 +81,10 @@ func (rs *RateSevice) GetCoinRates(coin *coins.Coin, buyWall bool) (map[string]m
 	if coin.Info.Tag == "BTC" {
 		return btcRates, nil
 	}
-	ratesWall, err := rs.GetCoinOrdersWall(coin)
+	if coin.Info.Tag == "XBTX"{
+		fmt.Println("xbtx found")
+	}
+	ratesWall, err := rs.GetCoinOrdersWall(coin, exchange)
 	if err != nil {
 		return rates, err
 	}
@@ -89,51 +97,82 @@ func (rs *RateSevice) GetCoinRates(coin *coins.Coin, buyWall bool) (map[string]m
 		orders = ratesWall["sell"]
 		orderPrice = orders[0].Price
 	}
+	if strings.ToUpper(coin.Info.Tag) == "GTH" {
+		// This handles coins with no BTC market, only stablecoin markets. Tested for USDT
+		usdRates, err := rs.GetUsdRates()
+		if err != nil {
+			return rates, err
+		}
+		for code, singleRate := range usdRates {
+			rateDec := decimal.NewFromFloat(singleRate.Rate)
+			rate := models.RateV2{
+				Name: singleRate.Name,
+			}
+			var rateNum decimal.Decimal
+			if coin.Info.Tag == "USDC" || coin.Info.Tag == "TUSD" || coin.Info.Tag == "USDT" {
+				rateNum = rateDec.Div(orderPrice)
+			} else {
+				rateNum = orderPrice.Mul(rateDec)
+			}
+			if code == "BTC" {
+				rate.Rate, _ = rateNum.Round(8).Float64()
+			} else {
+				rate.Rate, _ = rateNum.Round(6).Float64()
+			}
 
-	for code, singleRate := range btcRates {
-		rateDec := decimal.NewFromFloat(singleRate.Rate)
-		rate := models.RateV2{
-			Name: singleRate.Name,
+			// temporal solution
+			if coin.Rates.Exchange == "mock" {
+				rate.Rate = 0
+			}
+			rates[code] = rate
 		}
-		var rateNum decimal.Decimal
-		if coin.Info.Tag == "USDC" || coin.Info.Tag == "TUSD" || coin.Info.Tag == "USDT" {
-			rateNum = rateDec.Div(orderPrice)
-		} else {
-			rateNum = orderPrice.Mul(rateDec)
-		}
-		if code == "BTC" {
-			rate.Rate, _ = rateNum.Round(8).Float64()
-		} else {
-			rate.Rate, _ = rateNum.Round(6).Float64()
-		}
+		return rates, err
+	} else {
+		for code, singleRate := range btcRates {
+			rateDec := decimal.NewFromFloat(singleRate.Rate)
+			rate := models.RateV2{
+				Name: singleRate.Name,
+			}
+			var rateNum decimal.Decimal
+			if coin.Info.Tag == "USDC" || coin.Info.Tag == "TUSD" || coin.Info.Tag == "USDT" {
+				rateNum = rateDec.Div(orderPrice)
+			} else {
+				rateNum = orderPrice.Mul(rateDec)
+			}
+			if code == "BTC" {
+				rate.Rate, _ = rateNum.Round(8).Float64()
+			} else {
+				rate.Rate, _ = rateNum.Round(6).Float64()
+			}
 
-		// temporal solution
-		if coin.Rates.Exchange == "mock" {
-			rate.Rate = 0
+			// temporal solution
+			if coin.Rates.Exchange == "mock" {
+				rate.Rate = 0
+			}
+			rates[code] = rate
 		}
-		rates[code] = rate
+		return rates, err
 	}
-	return rates, err
 }
 
 // GetCoinToCoinRates will return the rates from a crypto to a crypto using the exchanges data
-func (rs *RateSevice) GetCoinToCoinRates(coinFrom *coins.Coin, coinTo *coins.Coin) (rate float64, err error) {
+func (rs *RateSevice) GetCoinToCoinRates(coinFrom *coins.Coin, coinTo *coins.Coin, exchange string) (rate float64, err error) {
 	if coinFrom.Info.Tag == coinTo.Info.Tag {
 		return rate, config.ErrorNoC2CWithSameCoin
 	}
 	if coinTo.Info.Tag == "BTC" {
-		coinRates, err := rs.GetCoinRates(coinFrom, false)
+		coinRates, err := rs.GetCoinRates(coinFrom, exchange, false)
 		for code, rate := range coinRates {
 			if code == "BTC" {
 				return rate.Rate, err
 			}
 		}
 	}
-	coinFromRates, err := rs.GetCoinRates(coinFrom, false)
+	coinFromRates, err := rs.GetCoinRates(coinFrom, exchange, false)
 	if err != nil {
 		return 0, err
 	}
-	coinToRates, err := rs.GetCoinRates(coinTo, false)
+	coinToRates, err := rs.GetCoinRates(coinTo, exchange, false)
 	if err != nil {
 		return 0, err
 	}
@@ -153,8 +192,8 @@ func (rs *RateSevice) GetCoinToCoinRates(coinFrom *coins.Coin, coinTo *coins.Coi
 	return floatConvert, nil
 }
 
-func (rs *RateSevice) GetCoinLiquidity(coin *coins.Coin) (float64, error) {
-	coinWalls, err := rs.GetCoinOrdersWall(coin)
+func (rs *RateSevice) GetCoinLiquidity(coin *coins.Coin, exchange string) (float64, error) {
+	coinWalls, err := rs.GetCoinOrdersWall(coin, exchange)
 	if err != nil {
 		return 0, err
 	}
@@ -179,21 +218,14 @@ func (rs *RateSevice) GetCoinLiquidity(coin *coins.Coin) (float64, error) {
 }
 
 // GetCoinToCoinRatesWithAmount is used to get the rates from crypto to crypto using a specified amount to convert
-func (rs *RateSevice) GetCoinToCoinRatesWithAmount(coinFrom *coins.Coin, coinTo *coins.Coin, amountReq float64) (obol.CoinToCoinWithAmountResponse, error) {
+func (rs *RateSevice) GetCoinToCoinRatesWithAmount(coinFrom *coins.Coin, coinTo *coins.Coin, amountReq float64, exchange string) (obol.CoinToCoinWithAmountResponse, error) {
 	if coinFrom.Info.Tag == coinTo.Info.Tag {
 		return obol.CoinToCoinWithAmountResponse{}, config.ErrorNoC2CWithSameCoin
 	}
 	amountRequested := decimal.NewFromFloat(amountReq).Round(6)
-	margin, _ := strconv.ParseFloat(os.Getenv("SAFETY_MARGIN"), 64)
-
-	amountRequested = amountRequested.Mul(decimal.NewFromFloat(margin))
-
-	if amountRequested.LessThanOrEqual(decimal.Zero) {
-		return obol.CoinToCoinWithAmountResponse{}, errors.New("amount must be greater than 0")
-	}
 	var coinWall []models.MarketOrder
 	if coinFrom.Info.Tag == "BTC" {
-		coinToWalls, err := rs.GetCoinOrdersWall(coinTo)
+		coinToWalls, err := rs.GetCoinOrdersWall(coinTo, exchange)
 		if err != nil {
 			return obol.CoinToCoinWithAmountResponse{}, err
 		}
@@ -202,7 +234,7 @@ func (rs *RateSevice) GetCoinToCoinRatesWithAmount(coinFrom *coins.Coin, coinTo 
 			coinWall[i].Amount = coinWall[i].Amount.Mul(coinWall[i].Price)
 		}
 	} else {
-		coinFromWalls, err := rs.GetCoinOrdersWall(coinFrom)
+		coinFromWalls, err := rs.GetCoinOrdersWall(coinFrom, exchange)
 		if err != nil {
 			return obol.CoinToCoinWithAmountResponse{}, err
 		}
@@ -252,29 +284,34 @@ func (rs *RateSevice) GetCoinToCoinRatesWithAmount(coinFrom *coins.Coin, coinTo 
 	} else if coinFrom.Info.Tag == "BTC" {
 		rate.AveragePrice, _ = decimal.NewFromInt(1).DivRound(avrPrice, 8).Float64()
 	} else if coinFrom.Info.Token && coinFrom.Info.Tag != "ETH" {
-		rateConv, err := rs.GetCoinToCoinRates(coinFrom, coinTo)
+		rateConv, err := rs.GetCoinToCoinRates(coinFrom, coinTo, exchange)
 		if err != nil {
 			return rate, err
 		}
 		rate.AveragePrice = rateConv
 	} else {
-		rateConv, err := rs.GetCoinToCoinRates(coinTo, btcData)
+		rateConv, err := rs.GetCoinToCoinRates(coinTo, btcData, exchange)
 		if err != nil {
 			return rate, err
 		}
 		rate.AveragePrice, _ = avrPrice.DivRound(decimal.NewFromFloat(rateConv), 8).Float64()
 	}
-	amount := decimal.NewFromFloat(rate.AveragePrice)
-	amount = amount.Mul(amountRequested.Div(decimal.NewFromFloat(margin))) // Adjusts the original requested amount by dividing fy the safety margin value.
+	amount := decimal.NewFromFloat(rate.AveragePrice).Mul(amountRequested)
 	rate.Amount, _ = amount.Float64()
 	return rate, err
 }
 
 // GetCoinOrdersWall will return the buy/sell orders from selected or fallback exchange
-func (rs *RateSevice) GetCoinOrdersWall(coin *coins.Coin) (orders map[string][]models.MarketOrder, err error) {
+func (rs *RateSevice) GetCoinOrdersWall(coin *coins.Coin, exchange string) (orders map[string][]models.MarketOrder, err error) {
 	var service Exchange
 	coinTag := coin.Info.Tag
-	switch coin.Rates.Exchange {
+	preferredExchange := ""
+	if exchange != "" {
+		preferredExchange = exchange
+	} else {
+		preferredExchange = coin.Rates.Exchange
+	}
+	switch preferredExchange {
 	case "binance":
 		service = rs.BinanceService
 	case "lukki":
@@ -298,7 +335,12 @@ func (rs *RateSevice) GetCoinOrdersWall(coin *coins.Coin) (orders map[string][]m
 	case "mock":
 		service = rs.BinanceService
 		coinTag = "ETH"
+	case "bithumb":
+		service = rs.BithumbService
+	case "birake":
+		service = rs.BirakeService
 	}
+
 
 	if service == nil {
 		return nil, config.ErrorNoServiceForCoin
@@ -327,6 +369,8 @@ func (rs *RateSevice) GetCoinOrdersWall(coin *coins.Coin) (orders map[string][]m
 			fallBackService = rs.StexService
 		case "southxchange":
 			fallBackService = rs.SouthXChangeService
+		case "birake":
+			service = rs.BirakeService
 		}
 		if fallBackService == nil {
 			return nil, config.ErrorNoFallBackServiceForCoin
@@ -340,6 +384,28 @@ func (rs *RateSevice) GetCoinOrdersWall(coin *coins.Coin) (orders map[string][]m
 // GetBtcEURRate will return the price of BTC on EUR
 func (rs *RateSevice) GetBtcEURRate() (float64, error) {
 	res, err := config.HttpClient.Get("https://bitstamp.net/api/v2/ticker/btceur")
+	if err != nil {
+		return 0, config.ErrorRequestTimeout
+	}
+	defer func() {
+		_ = res.Body.Close()
+	}()
+	contents, _ := ioutil.ReadAll(res.Body)
+	var rate exchanges.BitstampRate
+	err = json.Unmarshal(contents, &rate)
+	if err != nil {
+		return 0, err
+	}
+	rateNum, err := strconv.ParseFloat(rate.Last, 64)
+	if err != nil {
+		return 0, err
+	}
+	return rateNum, err
+}
+
+// GetUSD-URRate will return the price of BTC on EUR
+func (rs *RateSevice) GetUsdEurRate() (float64, error) {
+	res, err := config.HttpClient.Get("https://bitstamp.net/api/v2/ticker/eurusd")
 	if err != nil {
 		return 0, config.ErrorRequestTimeout
 	}
@@ -381,6 +447,40 @@ func (rs *RateSevice) GetBtcRates() (map[string]models.RateV2, error) {
 			}
 		} else {
 			newRate := decimal.NewFromFloat(r * btcRate)
+			float, _ := newRate.Float64()
+			rate = models.RateV2{
+				Name: models.FixerRatesNames[code],
+				Rate: float,
+			}
+		}
+		rates[code] = rate
+	}
+	return rates, err
+}
+
+// TODO RATES FOR USDT GTH
+// GetUsdRates will return the USD rates using the OpenRates structure
+func (rs *RateSevice) GetUsdRates() (map[string]models.RateV2, error) {
+	rates := make(map[string]models.RateV2)
+	if rs.FiatRates.LastUpdated.Unix()+UpdateFiatRatesTimeFrame < time.Now().Unix() {
+		err := rs.LoadFiatRates()
+		if err != nil {
+			return nil, err
+		}
+	}
+	if rs.BtcRates.LastUpdated+UpdateBtcRatesTimeFrame > time.Now().Unix() {
+		return rs.BtcRates.Rates, nil
+	}
+	usdRate, err := rs.GetUsdEurRate()
+	for code, r := range rs.FiatRates.Rates {
+		var rate models.RateV2
+		if code == "BTC" {
+			rate = models.RateV2{
+				Name: models.FixerRatesNames[code],
+				Rate: 1,
+			}
+		} else {
+			newRate := decimal.NewFromFloat(r * usdRate)
 			float, _ := newRate.Float64()
 			rate = models.RateV2{
 				Name: models.FixerRatesNames[code],

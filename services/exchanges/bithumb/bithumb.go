@@ -1,16 +1,15 @@
-package bitrue
+package bithumb
 
 import (
 	"encoding/json"
-	"io/ioutil"
-	"sort"
-	"strconv"
-	"strings"
-
 	"github.com/grupokindynos/obol/config"
 	"github.com/grupokindynos/obol/models"
 	"github.com/grupokindynos/obol/models/exchanges"
 	"github.com/shopspring/decimal"
+	"io/ioutil"
+	"sort"
+	"strconv"
+	"strings"
 )
 
 // Service is a common structure for a exchange
@@ -20,8 +19,17 @@ type Service struct {
 
 // CoinMarketOrders is used to get the market sell and buy wall from a coin
 func (s *Service) CoinMarketOrders(coin string) (orders map[string][]models.MarketOrder, err error) {
+	orders, err = s.getMarketInfo(strings.ToUpper(coin) + "-USDT")
+	if err != nil {
+		return orders, err
+	}
+	return orders, err
+}
+
+func (s *Service) getMarketInfo(market string) (orders map[string][]models.MarketOrder, err error){
+	// Retrieves BTC price as Bithumb markets for GTH have no GTH/BTC market
 	orders = make(map[string][]models.MarketOrder)
-	res, err := config.HttpClient.Get(s.MarketRateURL + strings.ToUpper(coin) + "BTC")
+	res, err := config.HttpClient.Get(s.MarketRateURL + "?symbol=" + market)
 	if err != nil {
 		return orders, config.ErrorRequestTimeout
 	}
@@ -39,7 +47,6 @@ func (s *Service) CoinMarketOrders(coin string) (orders map[string][]models.Mark
 	}
 	var buyOrders []models.MarketOrder
 	var sellOrders []models.MarketOrder
-
 	for _, order := range Response.Data.Asks {
 		strMarhshalPrice, err := json.Marshal(order[0])
 		if err != nil {
@@ -112,13 +119,13 @@ func (s *Service) CoinMarketOrders(coin string) (orders map[string][]models.Mark
 	})
 	orders["buy"] = buyOrders
 	orders["sell"] = sellOrders
-	return orders, err
+	return orders, nil
 }
 
 // InitService is used to safely start a new service reference.
 func InitService() *Service {
 	s := &Service{
-		MarketRateURL: "https://www.bitrue.com/api/v1/depth?symbol=",
+		MarketRateURL: "https://global-openapi.bithumb.pro/openapi/v1/spot/orderBook",
 	}
 	return s
 }

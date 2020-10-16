@@ -97,7 +97,7 @@ func (rs *RateSevice) GetCoinRates(coin *coins.Coin, exchange string, buyWall bo
 		orders = ratesWall["sell"]
 		orderPrice = orders[0].Price
 	}
-	if strings.ToUpper(coin.Info.Tag) == "GTH" {
+	if strings.ToUpper(coin.Info.Tag) == "" {
 		// This handles coins with no BTC market, only stablecoin markets. Tested for USDT
 		usdRates, err := rs.GetUsdRates()
 		if err != nil {

@@ -5,25 +5,27 @@ import (
 	"github.com/grupokindynos/obol/config"
 	"github.com/grupokindynos/obol/models"
 	"github.com/grupokindynos/obol/models/exchanges"
+	exchanges2 "github.com/grupokindynos/obol/services/exchanges"
 	"github.com/shopspring/decimal"
 	"io/ioutil"
 	"sort"
 	"strconv"
-	"strings"
 )
 
 // Service is a common structure for a exchange
 type Service struct {
 	MarketRateURL string
+	coinGecko *exchanges2.CoinGecko
 }
 
 // CoinMarketOrders is used to get the market sell and buy wall from a coin
 func (s *Service) CoinMarketOrders(coin string) (orders map[string][]models.MarketOrder, err error) {
-	orders, err = s.getMarketInfo(strings.ToUpper(coin) + "-USDT")
+	return s.coinGecko.GetSimplePriceToBtcAsRate(coin)
+	/*orders, err = s.getMarketInfo(strings.ToUpper(coin) + "-USDT")
 	if err != nil {
 		return orders, err
 	}
-	return orders, err
+	return orders, err*/
 }
 
 func (s *Service) getMarketInfo(market string) (orders map[string][]models.MarketOrder, err error){
@@ -126,6 +128,7 @@ func (s *Service) getMarketInfo(market string) (orders map[string][]models.Marke
 func InitService() *Service {
 	s := &Service{
 		MarketRateURL: "https://global-openapi.bithumb.pro/openapi/v1/spot/orderBook",
+		coinGecko: exchanges2.NewCoinGecko(),
 	}
 	return s
 }

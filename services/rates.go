@@ -2,7 +2,6 @@ package services
 
 import (
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
 	"os"
 	"strconv"
@@ -83,8 +82,9 @@ func (rs *RateSevice) GetCoinRates(coin *coins.Coin, exchange string, buyWall bo
 	if coin.Info.Tag == "BTC" {
 		return btcRates, nil
 	}
-	if coin.Info.Tag == "XBTX" {
-		fmt.Println("xbtx found")
+	// TODO Remove when exchanges update to FIRO Ticker
+	if coin.Info.Tag == "FIRO" {
+		coin.Info.Tag = "XZC"
 	}
 	ratesWall, err := rs.GetCoinOrdersWall(coin, exchange)
 	if err != nil {

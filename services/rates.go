@@ -3,13 +3,14 @@ package services
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/grupokindynos/obol/services/exchanges/birake"
-	"github.com/grupokindynos/obol/services/exchanges/bithumb"
 	"io/ioutil"
 	"os"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/grupokindynos/obol/services/exchanges/birake"
+	"github.com/grupokindynos/obol/services/exchanges/bithumb"
 
 	"github.com/grupokindynos/obol/services/exchanges/hitbtc"
 	"github.com/grupokindynos/obol/services/exchanges/lukki"
@@ -73,6 +74,7 @@ type RateSevice struct {
 
 // GetCoinRates is the main function to get the rates of a coin using the OpenRates structure
 func (rs *RateSevice) GetCoinRates(coin *coins.Coin, exchange string, buyWall bool) (map[string]models.RateV2, error) {
+
 	rates := make(map[string]models.RateV2)
 	btcRates, err := rs.GetBtcRates()
 	if err != nil {
@@ -81,7 +83,7 @@ func (rs *RateSevice) GetCoinRates(coin *coins.Coin, exchange string, buyWall bo
 	if coin.Info.Tag == "BTC" {
 		return btcRates, nil
 	}
-	if coin.Info.Tag == "XBTX"{
+	if coin.Info.Tag == "XBTX" {
 		fmt.Println("xbtx found")
 	}
 	ratesWall, err := rs.GetCoinOrdersWall(coin, exchange)
@@ -311,6 +313,11 @@ func (rs *RateSevice) GetCoinOrdersWall(coin *coins.Coin, exchange string) (orde
 	} else {
 		preferredExchange = coin.Rates.Exchange
 	}
+
+	// TODO Remove when exchanges update FIROs info
+	if coin.Info.Tag == "FIRO" {
+		coin.Info.Tag = "XZC"
+	}
 	switch preferredExchange {
 	case "binance":
 		service = rs.BinanceService
@@ -340,7 +347,6 @@ func (rs *RateSevice) GetCoinOrdersWall(coin *coins.Coin, exchange string) (orde
 	case "birake":
 		service = rs.BirakeService
 	}
-
 
 	if service == nil {
 		return nil, config.ErrorNoServiceForCoin

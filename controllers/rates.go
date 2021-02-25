@@ -47,7 +47,7 @@ func (rc *RateController) GetCoinToFIATRate(c *gin.Context) {
 		responses.GlobalResponseError(nil, errors.New("FIAT coin not found"), c)
 		return
 	}
-	rates, err := rc.RateService.GetCoinRates(fromCoinData, exchange,false)
+	rates, err := rc.RateService.GetCoinRates(fromCoinData, exchange,false, false)
 	rc.RatesCache[fromCoinData.Info.Tag] = CoinRate{
 		LastUpdated: time.Now().Unix(),
 		Rates:       rates,
@@ -73,7 +73,7 @@ func (rc *RateController) GetCoinRatesV2(c *gin.Context) {
 		responses.GlobalResponseError(rc.RatesCache[coinData.Info.Tag].Rates, err, c)
 		return
 	}
-	rates, err := rc.RateService.GetCoinRates(coinData, exchange, false)
+	rates, err := rc.RateService.GetCoinRates(coinData, exchange, false, true)
 	rc.RatesCache[coinData.Info.Tag] = CoinRate{
 		LastUpdated: time.Now().Unix(),
 		Rates:       rates,
@@ -99,7 +99,7 @@ func (rc *RateController) GetCoinRates(c *gin.Context) {
 		responses.GlobalResponseError(ratesV1, err, c)
 		return
 	}
-	rates, err := rc.RateService.GetCoinRates(coinData, exchange,  false)
+	rates, err := rc.RateService.GetCoinRates(coinData, exchange,false, true)
 	if err != nil {
 		responses.GlobalResponseError(nil, err, c)
 		return

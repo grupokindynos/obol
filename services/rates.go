@@ -72,7 +72,7 @@ type RateSevice struct {
 }
 
 // GetCoinRates is the main function to get the rates of a coin using the OpenRates structure
-func (rs *RateSevice) GetCoinRates(coin *coins.Coin, exchange string, buyWall bool) (map[string]models.RateV2, error) {
+func (rs *RateSevice) GetCoinRates(coin *coins.Coin, exchange string, buyWall bool, isSimple bool) (map[string]models.RateV2, error) {
 
 	rates := make(map[string]models.RateV2)
 	btcRates, err := rs.GetBtcRates()
@@ -82,10 +82,13 @@ func (rs *RateSevice) GetCoinRates(coin *coins.Coin, exchange string, buyWall bo
 	if coin.Info.Tag == "BTC" {
 		return btcRates, nil
 	}
-	// TODO Remove when exchanges update to FIRO Ticker
-	if coin.Info.Tag == "FIRO" {
-		coin.Info.Tag = "XZC"
-	}
+	/*if isSimple {
+		if coin.Info.StableCoin {
+			usdRates, _ := rs.GetUsdRates()
+			log.Println(usdRates)
+			return usdRates, nil
+		}
+	}*/
 	ratesWall, err := rs.GetCoinOrdersWall(coin, exchange)
 	if err != nil {
 		return rates, err
@@ -163,18 +166,18 @@ func (rs *RateSevice) GetCoinToCoinRates(coinFrom *coins.Coin, coinTo *coins.Coi
 		return rate, config.ErrorNoC2CWithSameCoin
 	}
 	if coinTo.Info.Tag == "BTC" {
-		coinRates, err := rs.GetCoinRates(coinFrom, exchange, false)
+		coinRates, err := rs.GetCoinRates(coinFrom, exchange, false, false)
 		for code, rate := range coinRates {
 			if code == "BTC" {
 				return rate.Rate, err
 			}
 		}
 	}
-	coinFromRates, err := rs.GetCoinRates(coinFrom, exchange, false)
+	coinFromRates, err := rs.GetCoinRates(coinFrom, exchange, false, false)
 	if err != nil {
 		return 0, err
 	}
-	coinToRates, err := rs.GetCoinRates(coinTo, exchange, false)
+	coinToRates, err := rs.GetCoinRates(coinTo, exchange, false, false)
 	if err != nil {
 		return 0, err
 	}
@@ -312,11 +315,6 @@ func (rs *RateSevice) GetCoinOrdersWall(coin *coins.Coin, exchange string) (orde
 		preferredExchange = exchange
 	} else {
 		preferredExchange = coin.Rates.Exchange
-	}
-
-	// TODO Remove when exchanges update FIROs info
-	if coin.Info.Tag == "FIRO" {
-		coin.Info.Tag = "XZC"
 	}
 	switch preferredExchange {
 	case "binance":

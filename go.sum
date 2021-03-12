@@ -61,8 +61,8 @@ github.com/gopherjs/gopherjs v0.0.0-20181017120253-0766667cb4d1/go.mod h1:wJfORR
 github.com/gorilla/websocket v1.4.0/go.mod h1:E7qHFY5m1UJ88s3WnNqhKjPHQ0heANvMoAMk2YaljkQ=
 github.com/grpc-ecosystem/go-grpc-middleware v1.0.0/go.mod h1:FiyG127CGDf3tlThmgyCl78X/SZQqEOJBCDaAfeWzPs=
 github.com/grpc-ecosystem/grpc-gateway v1.9.6/go.mod h1:vNeuVxBJEsws4ogUvrchl83t/GYV9WGTSLVdBhOQFDY=
-github.com/grupokindynos/common v0.0.0-20210105233100-5f5f9e6d4c53 h1:5rp9KKmg5Jy8F9ArSU4s399Pp9Fp2kQH4hheI8nOwOA=
-github.com/grupokindynos/common v0.0.0-20210105233100-5f5f9e6d4c53/go.mod h1:01s5/fk/NE85VAR6RiFfUWWiy/UnSBRLIltJCAu56Bw=
+github.com/grupokindynos/common v1.0.1-0.20210311172755-e195667416fb h1:ZOJP6ID5/ouudkwFlya9F6XCnj9KLCXifu/ZeU7w/iQ=
+github.com/grupokindynos/common v1.0.1-0.20210311172755-e195667416fb/go.mod h1:01s5/fk/NE85VAR6RiFfUWWiy/UnSBRLIltJCAu56Bw=
 github.com/heroku/heroku-go/v5 v5.1.0/go.mod h1:d+1QrZyjbnQJG1f8xIoVvMQRFLt3XRVZOdlm26Sr73U=
 github.com/heroku/rollrus v0.1.1/go.mod h1:B3MwEcr9nmf4xj0Sr5l9eSht7wLKMa1C+9ajgAU79ek=
 github.com/heroku/x v0.0.11 h1:sLdsUADcLAJywBnbZrouQuvOq7rqElCCc3518R75oUg=

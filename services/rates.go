@@ -2,6 +2,7 @@ package services
 
 import (
 	"encoding/json"
+	"github.com/grupokindynos/obol/services/exchanges/pancake"
 	"io/ioutil"
 	"os"
 	"strconv"
@@ -69,6 +70,7 @@ type RateSevice struct {
 	LukkiService        *lukki.Service
 	BithumbService      *bithumb.Service
 	BirakeService       *birake.Service
+	PancakeService 		*pancake.Service
 }
 
 // GetCoinRates is the main function to get the rates of a coin using the OpenRates structure
@@ -113,6 +115,10 @@ func (rs *RateSevice) GetCoinRates(coin *coins.Coin, exchange string, buyWall bo
 			rate := models.RateV2{
 				Name: singleRate.Name,
 			}
+			//if coin.Info.TokenNetwork == "binance" {
+			//	rateUSD := btcRates["USD"]
+			//	orderPrice.Div(decimal.NewFromFloat(rateUSD.Rate))
+			//}
 			var rateNum decimal.Decimal
 			if coin.Info.Tag == "USDC" || coin.Info.Tag == "TUSD" || coin.Info.Tag == "USDT" {
 				rateNum = rateDec.Div(orderPrice)
@@ -133,6 +139,11 @@ func (rs *RateSevice) GetCoinRates(coin *coins.Coin, exchange string, buyWall bo
 		}
 		return rates, err
 	} else {
+		if coin.Info.TokenNetwork == "binance" && coin.Info.Tag != "BNB"{
+			// BNB uses binance orders at the moment TODO use pancakeswap as well
+			rateUSD := btcRates["USD"]
+			orderPrice = orderPrice.Div(decimal.NewFromFloat(rateUSD.Rate))
+		}
 		for code, singleRate := range btcRates {
 			rateDec := decimal.NewFromFloat(singleRate.Rate)
 			rate := models.RateV2{
@@ -344,7 +355,10 @@ func (rs *RateSevice) GetCoinOrdersWall(coin *coins.Coin, exchange string) (orde
 		service = rs.BithumbService
 	case "birake":
 		service = rs.BirakeService
+	case "pancake_swap":
+		service = rs.PancakeService
 	}
+
 
 	if service == nil {
 		return nil, config.ErrorNoServiceForCoin

@@ -60,7 +60,7 @@ func (rc *RateController) GetCoinToFIATRate(c *gin.Context) {
 	return
 }
 
-// GetCoinRates will return a rate map based on the selected coin
+// GetCoinRatesV2 GetCoinRates will return a rate map based on the selected coin
 func (rc *RateController) GetCoinRatesV2(c *gin.Context) {
 	coin := c.Param("coin")
 	if coin == "POLISBSC" {
@@ -88,9 +88,9 @@ func (rc *RateController) GetCoinRatesV2(c *gin.Context) {
 // GetCoinRates will return a rate map based on the selected coin
 func (rc *RateController) GetCoinRates(c *gin.Context) {
 	coin := c.Param("coin")
-	if coin == "POLISBSC" || coin == "polisbsc" {
-		coin = "POLIS"
-	}
+	//if coin == "POLISBSC" || coin == "polisbsc" {
+	//	coin = "POLIS"
+	//}
 	exchange := c.Query("exchange")
 	coinData, err := coinfactory.GetCoin(coin)
 	if err != nil {

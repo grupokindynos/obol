@@ -3,6 +3,7 @@ package main
 import (
 	"github.com/grupokindynos/obol/services/exchanges/birake"
 	"github.com/grupokindynos/obol/services/exchanges/bithumb"
+	"github.com/grupokindynos/obol/services/exchanges/pancake"
 	"net/http"
 	"os"
 	"time"
@@ -72,6 +73,7 @@ func ApplyRoutes(r *gin.Engine) {
 		LukkiService:        lukki.InitService(),
 		BithumbService:      bithumb.InitService(),
 		BirakeService:       birake.InitService(),
+		PancakeService: 	 pancake.InitService(),
 	}
 	err := rateService.LoadFiatRates()
 	if err != nil {

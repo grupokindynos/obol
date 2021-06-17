@@ -8,6 +8,7 @@ import (
 	"github.com/grupokindynos/obol/config"
 	"github.com/grupokindynos/obol/models"
 	"github.com/grupokindynos/obol/services"
+	"log"
 	"os"
 	"sort"
 	"strconv"
@@ -68,6 +69,7 @@ func (rc *RateController) GetCoinRatesV2(c *gin.Context) {
 	}
 	coinData, err := coinfactory.GetCoin(coin)
 	exchange := c.Query("exchange")
+	log.Println("exchange debug: ", exchange)
 	if err != nil {
 		responses.GlobalResponseError(nil, err, c)
 		return

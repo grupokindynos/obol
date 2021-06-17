@@ -1,6 +1,6 @@
 module github.com/grupokindynos/obol
-
-go 1.13
+// +heroku goVersion go1.16
+go 1.16
 
 require (
 	github.com/gin-contrib/cors v1.3.0

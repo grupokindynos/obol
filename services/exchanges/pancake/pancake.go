@@ -86,7 +86,7 @@ func (s *Service) CoinMarketOrders(coin string) (orders map[string][]models.Mark
 // InitService is used to safely start a new service reference.
 func InitService() *Service {
 	s := &Service{
-		MarketRateURL: "https://bsc-api-pp.herokuapp.com/api/v1/price",
+		MarketRateURL: "https://pp-bsc-api.herokuapp.com/api/v1/price",
 	}
 	return s
 }
